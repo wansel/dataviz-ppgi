@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+  root: '.', // permite rodar a partir da raiz do projeto
   build: {
     lib: {
       entry: 'src/index.ts',
@@ -16,4 +17,7 @@ export default defineConfig({
       },
     },
   },
+  server: {
+    open: '/dev/index.html', // Abre direto a página de teste
+  }
 });
