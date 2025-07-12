@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="755px" height="72px" viewBox="0 0 755 72" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 51.3 (57544) - http://www.bohemiancoding.com/sketch -->
+    <title>Artboard</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Artboard" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <rect id="Rectangle" fill="#DE8636" x="53" y="27" width="21" height="23"></rect>
+        <rect id="Rectangle-Copy" fill="#3BC1DE" x="283" y="27" width="21" height="23"></rect>
+        <rect id="Rectangle-Copy-2" fill="#351633" x="553" y="27" width="21" height="23"></rect>
+        <text id="Atividades" font-family="ArialMT, Arial" font-size="20" font-weight="normal" fill="#4C4C4C">
+            <tspan x="87.3623047" y="44">Atividades</tspan>
+        </text>
+        <text id="Fórum" font-family="ArialMT, Arial" font-size="20" font-weight="normal" fill="#4C4C4C">
+            <tspan x="320.108398" y="44">Fórum</tspan>
+        </text>
+        <text id="Sistema" font-family="ArialMT, Arial" font-size="20" font-weight="normal" fill="#4C4C4C">
+            <tspan x="587.376953" y="44">Sistema</tspan>
+        </text>
+    </g>
+</svg>
