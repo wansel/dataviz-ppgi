@@ -17,6 +17,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.31.0",
+    "@types/d3": "^7.4.3",
     "@types/node": "^24.0.13",
     "eslint": "^9.31.0",
     "eslint-plugin-vue": "^10.3.0",
