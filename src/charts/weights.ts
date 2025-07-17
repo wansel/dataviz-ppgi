@@ -36,13 +36,25 @@ export function drawWeightsChart(
     .classed('shadow', true);
 
   const grid = chartContainer.append('div')
-    .classed('weightsGridContainer', true);
+    .classed('weightsGridContainer', true)
+    .style('display', 'flex')
+    .style('flex-wrap', 'wrap')
+    .style('gap', '16px')
+    .style('align-items', 'flex-end');
+
+  const maxBox = box; // altura máxima
 
   const weights = grid.selectAll('.div-weight')
     .data(sortedData.filter(d => d.weight !== 0))
     .enter()
     .append('div')
-    .classed('div-weight', true);
+    .classed('div-weight', true)
+    .style('display', 'flex')
+    .style('flex-direction', 'column')
+    .style('justify-content', 'flex-end')
+    .style('align-items', 'center')
+    .style('height', `${maxBox}px`)
+    .style('position', 'relative');
 
   weights.append('div')
     .classed('title', true)
@@ -59,6 +71,9 @@ export function drawWeightsChart(
     .style('display', 'none')
     .style('opacity', 0)
     .style('position', 'absolute')
+    .style('left', '50%')
+    .style('bottom', '100%')
+    .style('transform', 'translateX(-50%) translateY(-8px)')
     .style('width', '0px')
     .style('height', '0px')
     .style('overflow', 'hidden');
@@ -76,22 +91,22 @@ export function drawWeightsChart(
 
   title.append('img')
     .classed('tooltipImg', true)
-    .attr('src', d => `${options.imgPath ?? ''}${d.img}`)
+    .attr('src', (d:WeightItem) => `${options.imgPath ?? ''}${d.img}`)
     .attr('width', 50)
     .attr('height', 50);
 
   title.append('div')
     .style('padding', '8px')
-    .text(d => d.title);
+    .text((d:WeightItem) => d.title);
 
   title.append('div')
     .classed('tooltipTitleWeight', true)
-    .text(d => `${d.weight} Kg`);
+    .text((d:WeightItem) => `${d.weight} Kg`);
 
   tooltipInfo.append('div')
     .classed('tooltipDescription', true)
     .append('text')
-    .text(d => d.description);
+    .text((d:WeightItem) => d.description);
 
   weights
     .on('mouseover', function () {
