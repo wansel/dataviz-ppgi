@@ -2,7 +2,7 @@ import * as d3 from 'd3';
 
 interface StudentData {
     name: string;
-    photo: string;
+    avatar: string;
     sessions: { start: Date; end: Date; color: string }[];
 }
 
@@ -27,10 +27,9 @@ export function drawEventTimeline(
   const eventStart = new Date('2024-01-01T13:00');
   const eventEnd   = new Date('2024-01-01T15:00');
 
-  const container = d3.select(selector);
+  // const container = d3.select(selector);
   
   const svg = d3
-    // .select('#chart')
     .select(selector)
     .append('svg')
     .attr('width', width + margin.left + margin.right)
@@ -49,6 +48,8 @@ export function drawEventTimeline(
     .padding(0);
     // .padding(0.1);
 
+
+
   // Retângulo cinza claro ao fundo, cobrindo todos os alunos
   svg.append('rect')
   .attr('x', x(eventStart))
@@ -63,8 +64,8 @@ export function drawEventTimeline(
     .attr('transform', `translate(0,${height})`)
     .call((g) => g.call(d3.axisBottom(x).ticks(d3.timeHour.every(1)).tickFormat(d3.timeFormat('%H:%M'))));
 
-  svg.append('g')
-    .call(d3.axisLeft(y));
+  // svg.append('g')
+  //   .call(d3.axisLeft(y));
 
   // Desenhar faixas de fundo alternadas (zebra)
   svg.selectAll('.row-bg')
@@ -77,6 +78,68 @@ export function drawEventTimeline(
     .attr('height', y.bandwidth())
     .attr('fill', (_, i) => (i % 2 === 0 ? '#FFFFFF' : '#F8F8F8'))
     .attr('fill-opacity', 0.6); // opacidade reduzida;
+
+  // Renderizar os nomes + imagens dos estudantes
+const labelGroup = svg.append("g")
+  .attr("class", "labels");
+
+labelGroup.selectAll(".student-label")
+  .data(data)
+  .join("g")
+  .attr("class", "student-label")
+  .attr("transform", d => `translate(0, ${y(d.name)!})`)
+  .each(function(d) {
+    const g = d3.select(this);
+      //Nome do estudante (com quebra automática em até duas linhas)
+    const maxChars = 18;
+    const words = d.name.split(" ");
+    let line = "";
+    let lines: string[] = [];
+
+    words.forEach(w=>{
+      if ((line + " " + w).trim().length > maxChars) {
+        lines.push(line.trim());
+        line = w;
+      } else {
+        line += " " + w;
+      }
+    });
+    if (line) lines.push(line.trim());
+
+
+    // Imagem do estudante (avatar circular)
+    const avatarSize = y.bandwidth() * 0.8; // ajusta para caber na faixa
+    g.append("image")
+      .attr("x", -avatarSize - 10) // 10px de margem à esquerda
+      .attr("y", (y.bandwidth() - avatarSize) / 2)
+      .attr("width", avatarSize)
+      .attr("height", avatarSize)
+      .attr("href", d.avatar) // URL da imagem, ex: "img/aluno1.png"
+      .attr("clip-path", "circle(50%)"); // borda circular
+
+    // Criar elemento Text para Nome do estudante
+    // Criar elemento <text>
+  const text = g.append("text")
+    .attr("x", 0)
+    .attr("y", y.bandwidth() / 2 - (lines.length - 1) * 6) // sobe se tiver mais de 1 linha
+    .attr("text-anchor", "start")
+    .style("font-size", "12px");
+
+  // Adicionar <tspan> para cada linha
+  lines.forEach((ln, i) => {
+    text.append("tspan")
+      .attr("x", 0)
+      .attr("dy", i === 0 ? 0 : "1.2em") // espaçamento entre linhas
+      .text(ln);
+  });
+    // g.append("text")
+    //   .attr("x", 0)
+    //   .attr("y", y.bandwidth() / 2)
+    //   .attr("dy", "0.35em") // centralizar verticalmente
+    //   .attr("text-anchor", "start")
+    //   .style("font-size", "12px")
+    //   .text(d.name);
+  });
 
   // Agora desenhar as barras por estudante
   data.forEach(student => {
