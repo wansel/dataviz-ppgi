@@ -1,5 +1,7 @@
-import { drawBarChart, drawEventTimeline, drawLineChart, drawWeightsChart } from '../src';
-
+// import '../src/style.css';
+console.log("Tailwind carregado");
+// import { drawBarChart, drawEventTimeline, drawLineChart, drawWeightsChart } from '../src';
+import { drawEventTimeline } from '../src';
 // drawBarChart('#grafico1', [15, 30, 20, 40]);
 
 // drawLineChart('#grafico2', [
@@ -16,9 +18,6 @@ import { drawBarChart, drawEventTimeline, drawLineChart, drawWeightsChart } from
 // ], {
 //   imgPath: '/img'
 // });
-
-
-
 
 // const data: StudentData[] = [
 const datagraf4 = [
@@ -47,4 +46,4 @@ const datagraf4 = [
   },
 ];
 
-drawEventTimeline('#grafico4', datagraf4, {imgPath: '/img'});
+drawEventTimeline('#grafico4', datagraf4, {imgPath: '/img', title:'Aula 03', subtitle:'Permanência dos estudantes no evento'});

@@ -7,6 +7,8 @@ interface StudentData {
 }
 
 interface Options {
+  title: string,
+  subtitle: string,
   imgPath?: string;
   width?: number;
   height?: number;
