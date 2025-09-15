@@ -44,6 +44,14 @@ const datagraf4 = [
     avatar: '/img/students/43.jpg',
     sessions: [],
   },
+  {
+    name: 'Ariel Ferreira Carvalho',
+    avatar: '/img/students/96.jpg',
+    sessions: [
+      { start: new Date('2024-01-01T13:45'), end: new Date('2024-01-01T14:40'), color: '#2196f3' },
+      // { start: new Date('2024-01-01T13:50'), end: new Date('2024-01-01T14:40'), color: '#2196f3' },
+    ],
+  },
 ];
 
 drawEventTimeline('#grafico4', datagraf4, {imgPath: '/img', title:'Aula 03', subtitle:'Permanência dos estudantes no evento'});

@@ -1,9 +1,9 @@
 import * as d3 from 'd3';
 
 interface StudentData {
-    name: string;
-    avatar: string;
-    sessions: { start: Date; end: Date; color: string }[];
+  name: string;
+  avatar: string;
+  sessions: { start: Date; end: Date; color: string }[];
 }
 
 interface Options {
@@ -32,13 +32,35 @@ export function drawEventTimeline(
 
   let delayThreshold = options.initialDelay ?? 15; // começa em 15 minutos
 
-  const svg = d3
-    .select(selector)
+  // Container principal
+  const container = d3.select(selector);
+  const containerNode = container.node();
+  
+  if(!containerNode) {
+    console.error(`Elemento não encontrado para o seletor: "${selector}"`);
+    return; // Interrompe a função se o container não existir
+  }
+    const containerWidth = containerNode.getBoundingClientRect().width;
+    console.log(`A largura do container é: ${containerWidth}`);
+  
+  
+  // SVG principal
+  const svg = container
+    // .select(selector)
     .append('svg')
     .attr('width', width + margin.left + margin.right)
     .attr('height', height + margin.top + margin.bottom);
-    // .append('g')
-    // .attr('transform', `translate(${margin.left},${margin.top})`);
+
+  const defs = svg.append("defs");
+
+  defs.append("filter")
+    .attr("id", "grayscale")
+    .append("feColorMatrix")
+    .attr("type", "matrix")
+    .attr("values", "0.3333 0.3333 0.3333 0 0 \
+                    0.3333 0.3333 0.3333 0 0 \
+                    0.3333 0.3333 0.3333 0 0 \
+                    0      0      0      1 0");
 
   //Grupo principal do gráfico (deslocado pela margem)
   const chartArea = svg.append("g")
@@ -54,18 +76,17 @@ export function drawEventTimeline(
     .domain(data.map(d => d.name))
     .range([0, height])
     .padding(0);
-    // .padding(0.1); //Padding desabilitado
 
-  // Labels (ficam em outro grupo, alinhados à esquerda, foda do chartArea)
+  // Labels (ficam em outro grupo, alinhados à esquerda, fora do chartArea)
   const labelGroup = svg.append("g")
-    .attr("class", "labels")
-    .attr("transform", `translate(10, ${margin.top})`) // 10 px da borda
+    .attr("class", "labels");
+    // .attr("transform", `translate(10, ${margin.top})`) // 10 px da borda
   
   labelGroup.selectAll(".student-label")
     .data(data)
     .join("g")
     .attr("class", "student-label")
-    .attr("transform", d=> `translate(0, ${y(d.name)!})`)
+    .attr("transform", d=> `translate(0, ${y(d.name)!+margin.top})`) //adc margin.top
     .each(function(d) {
       const g = d3.select(this)
       const avatarSize = y.bandwidth() * 0.8;
@@ -77,7 +98,16 @@ export function drawEventTimeline(
         .attr("width", avatarSize)
         .attr("height", avatarSize)
         .attr("href", d.avatar)
-        .attr("clip-path", "circle(50%)");
+        .attr("clip-path", "circle(50%)")
+        .attr("filter", d.sessions.length === 0? "url(#grayscale)" : null ) // aplica P&B
+        .on("mouseover", function(_, d) {
+          d3.select(this).attr("filter", null);
+        })
+        .on("mouseout", function(_,d) {
+          if (d.sessions.length === 0) {
+            d3.select(this).attr("filter", "url(#grayscale)"); //aplica de novo
+          }
+        });
 
       // texto com quebra de linha
       const maxChars = 18;
@@ -115,14 +145,14 @@ export function drawEventTimeline(
 
     })  
 
-  // Retângulo cinza claro ao fundo, cobrindo todos os alunos
+  // Fundo do evento - Retângulo cinza claro ao fundo, cobrindo todos os alunos
   chartArea.append('rect')
-  .attr('x', x(eventStart))
-  .attr('y', 0)
-  .attr('width', x(eventEnd) - x(eventStart))
-  .attr('height', height)
-  .attr('fill', '#E0E0E0')
-  .lower(); // envia para o fundo, atrás das barras
+    .attr('x', x(eventStart))
+    .attr('y', 0)
+    .attr('width', x(eventEnd) - x(eventStart))
+    .attr('height', height)
+    .attr('fill', '#E0E0E0')
+    .lower(); // envia para o fundo, atrás das barras
 
 
   // Axis
@@ -130,98 +160,65 @@ export function drawEventTimeline(
     .attr('transform', `translate(0,${height})`)
     .call((g) => g.call(d3.axisBottom(x).ticks(d3.timeHour.every(1)).tickFormat(d3.timeFormat('%H:%M'))));
 
-  // Desenhar faixas de fundo alternadas (zebra)
-  chartArea.selectAll('.row-bg')
+  // Zebra - Desenhar faixas de fundo alternadas
+  svg.selectAll('.row-bg')
     .data(data)
     .join('rect')
     .attr('class', 'row-bg')
     .attr('x', 0)
-    .attr('y', d => y(d.name)!)
+    .attr('y', d => y(d.name)!+margin.top) // adc margin.top
     .attr('width', width)
     .attr('height', y.bandwidth())
     .attr('fill', (_, i) => (i % 2 === 0 ? '#FFFFFF' : '#F8F8F8'))
-    .attr('fill-opacity', 0.6); // opacidade reduzida;
-
-  // Renderizar os nomes + imagens dos estudantes
-// const labelGroup = svg.append("g")
-//   .attr("class", "labels");
-
-// labelGroup.selectAll(".student-label")
-//   .data(data)
-//   .join("g")
-//   .attr("class", "student-label")
-//   .attr("transform", d => `translate(0, ${y(d.name)!})`)
-//   .each(function(d) {
-//     const g = d3.select(this);
-//       //Nome do estudante (com quebra automática em até duas linhas)
-//     const maxChars = 18;
-//     const words = d.name.split(" ");
-//     let line = "";
-//     let lines: string[] = [];
-
-//     words.forEach(w=>{
-//       if ((line + " " + w).trim().length > maxChars) {
-//         lines.push(line.trim());
-//         line = w;
-//       } else {
-//         line += " " + w;
-//       }
-//     });
-//     if (line) lines.push(line.trim());
+    // .attr('fill-opacity', 1) // opacidade reduzida;
+    .lower();
 
 
-//     // Imagem do estudante (avatar circular)
-//     const avatarSize = y.bandwidth() * 0.8; // ajusta para caber na faixa
-//     g.append("image")
-//       .attr("x", -avatarSize - 10) // 10px de margem à esquerda
-//       .attr("y", (y.bandwidth() - avatarSize) / 2)
-//       .attr("width", avatarSize)
-//       .attr("height", avatarSize)
-//       .attr("href", d.avatar) // URL da imagem, ex: "img/aluno1.png"
-//       .attr("clip-path", "circle(50%)"); // borda circular
+  // Desenhar as barras por estudante
+  function updateBars() {
+    console.log("updatebars")
+    data.forEach(student => {
+      chartArea
+        .selectAll(`.bar-${student.name.replace(/\s+/g, '-')}`)
+        .data(student.sessions)
+        .join('rect')
+        .attr("class", `bar-${student.name.replace(/\s+/g, "-")}`)
+        .attr('x', d => x(d.start))
+        .attr('y', y(student.name)!+20)
+        // .attr('height', y.bandwidth())
+        .attr('height', 20)
+        .attr('width', d => x(d.end) - x(d.start))
+        .attr('fill', (d)=> {
+          const diffMinutes = (d.start.getTime() - eventStart.getTime()) / (1000 * 60);
+          return diffMinutes > delayThreshold ? "#f4b400": "#2196f3";
+        });
+    });
+  }
 
-//     // Criar elemento Text para Nome do estudante
-//     // Criar elemento <text>
-//   const text = g.append("text")
-//     .attr("x", 0)
-//     .attr("y", y.bandwidth() / 2 - (lines.length - 1) * 6) // sobe se tiver mais de 1 linha
-//     .attr("text-anchor", "start")
-//     .style("font-size", "12px");
+  // Cria uma DIV para o input + label
+  const controls = container
+    .append("div")
+    .attr("class", "mt-4 flex justify-center items-center gap-2");
 
-//   // Adicionar <tspan> para cada linha
-//   lines.forEach((ln, i) => {
-//     text.append("tspan")
-//       .attr("x", 0)
-//       .attr("dy", i === 0 ? 0 : "1.2em") // espaçamento entre linhas
-//       .text(ln);
-//   });
-//     // g.append("text")
-//     //   .attr("x", 0)
-//     //   .attr("y", y.bandwidth() / 2)
-//     //   .attr("dy", "0.35em") // centralizar verticalmente
-//     //   .attr("text-anchor", "start")
-//     //   .style("font-size", "12px")
-//     //   .text(d.name);
-//   });
+  controls
+    .append("label")
+    .attr("for", "delay-input")
+    .text("Atraso (min):");
 
-  // Agora desenhar as barras por estudante
-  data.forEach(student => {
-    chartArea.selectAll(`.bar-${student.name.replace(/\s+/g, '-')}`)
-      .data(student.sessions)
-      .join('rect')
-      .attr('x', d => x(d.start))
-      .attr('y', y(student.name)!+20)
-      // .attr('height', y.bandwidth())
-      .attr('height', 20)
-      .attr('width', d => x(d.end) - x(d.start))
-      .attr('fill', d => d.color);
+  const delayInput = controls
+    .append("input")
+    .attr("id", "delay-input")
+    .attr("type", "number")
+    .attr("value", delayThreshold)
+    .attr("min", 0)
+    .attr("step", 1)
+    .attr("class", "border rounded px-2 py-1 w-20 text-center");
+
+  updateBars();
+  
+  delayInput.on("input", function(){
+    delayThreshold = parseInt((this as HTMLInputElement).value, 10) || 0;
+    updateBars();
   });
-
-    //Atraso e desconexão
-    chartArea.append('text')
-      .attr('x', width / 2)
-      .attr('y', height + 30)
-      .attr('text-anchor', 'middle')
-      .text('Atraso e desconexão ~15min.');    
 }
 
