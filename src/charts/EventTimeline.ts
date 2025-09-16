@@ -1,9 +1,28 @@
 import * as d3 from 'd3';
 
+
+
+interface Session {
+  start: Date;
+  end: Date;
+}
+
 interface StudentData {
   name: string;
   avatar: string;
-  sessions: { start: Date; end: Date; color: string }[];
+  sessions: Session[];
+}
+
+interface EventData {
+  title: string;
+  subtitle: string;
+  start: Date;
+  end: Date;
+}
+
+interface TimelineData {
+  event: EventData;
+  students: StudentData[]
 }
 
 interface Options {
@@ -18,13 +37,12 @@ interface Options {
 
 export function drawEventTimeline(
   selector: string,
-  // data: number[],
   data: StudentData[],
   options: Options = {}
 ){
   const margin = { top: 20, right: 20, bottom: 40, left: 240 };
   const width = 900 - margin.left - margin.right;
-  const height = 300 - margin.top - margin.bottom;
+  const height = 500 - margin.top - margin.bottom;
 
   // Definir o horário do evento
   const eventStart = new Date('2024-01-01T13:00');
@@ -70,6 +88,7 @@ export function drawEventTimeline(
   const x = d3
     .scaleTime()
     .domain([new Date('2024-01-01T12:00'), new Date('2024-01-01T16:00')])
+    // .domain([data.event.start, data.event.end])
     .range([0, width]);
 
   const y = d3.scaleBand()
@@ -108,9 +127,21 @@ export function drawEventTimeline(
             d3.select(this).attr("filter", "url(#grayscale)"); //aplica de novo
           }
         });
+      
+      // Ícone de desconexão
+      const iconSize = 16; // tamanho do ícone (ex: alerta vermelho)
+      const iconOffset = 4; // margem interna
+
+      g.append("image")
+        .attr("class", "studant-avatar")
+        .attr("xlink:href", d => d.sessions.length === 0 ? "/img/offline.png" : null)
+          .attr("x", 0) // canto superior direito
+          .attr("y", d => iconOffset)
+          .attr("width", iconSize)
+          .attr("height", iconSize); 
 
       // texto com quebra de linha
-      const maxChars = 18;
+      const maxChars = 20;
       const words = d.name.split(" ");
       const padding = 6; 
 
@@ -151,7 +182,7 @@ export function drawEventTimeline(
     .attr('y', 0)
     .attr('width', x(eventEnd) - x(eventStart))
     .attr('height', height)
-    .attr('fill', '#E0E0E0')
+    .attr('fill', '#e0e0e05a')
     .lower(); // envia para o fundo, atrás das barras
 
 
@@ -174,24 +205,41 @@ export function drawEventTimeline(
     .lower();
 
 
+
   // Desenhar as barras por estudante
   function updateBars() {
-    console.log("updatebars")
+    console.log("updatebars");
     data.forEach(student => {
+      
+      const barheight = 15;
+
       chartArea
         .selectAll(`.bar-${student.name.replace(/\s+/g, '-')}`)
         .data(student.sessions)
         .join('rect')
         .attr("class", `bar-${student.name.replace(/\s+/g, "-")}`)
         .attr('x', d => x(d.start))
-        .attr('y', y(student.name)!+20)
+        // .attr('y', y(student.name)!+20)
+        .attr("y", y(student.name)!+ (y.bandwidth() / 4)+ (barheight/2)) // centralizar verticalmente
         // .attr('height', y.bandwidth())
-        .attr('height', 20)
+        .attr('height', barheight)
         .attr('width', d => x(d.end) - x(d.start))
         .attr('fill', (d)=> {
           const diffMinutes = (d.start.getTime() - eventStart.getTime()) / (1000 * 60);
           return diffMinutes > delayThreshold ? "#f4b400": "#2196f3";
-        });
+        })
+      
+      chartArea
+        .append("rect")
+        .attr("x", 0) // começa logo depois do avatar
+        .attr("y", y(student.name)!+ (y.bandwidth() / 6)*2 ) // centralizar verticalmente
+        .attr("width", width) // ocupa o resto
+        .attr("height", y.bandwidth() / 3) // mais fino que a faixa inteira
+        .attr("fill", "#00000011")
+        .lower()
+        ; // cinza claro (tailwind gray-200)
+
+        
     });
   }
 
