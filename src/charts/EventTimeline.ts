@@ -35,9 +35,15 @@ interface Options {
   initialDelay?: number; // valor inicial do atraso (minutos)
 }
 
+function getMinutesWithinEvent(session: { start: Date, end: Date }, eventStart: Date, eventEnd: Date) {
+  const s = session.start < eventStart ? eventStart : session.start;
+  const e = session.end > eventEnd ? eventEnd : session.end;
+  return Math.max(0, (e.getTime() - s.getTime()) / (1000 * 60));
+}
+
 export function drawEventTimeline(
   selector: string,
-  data: StudentData[],
+  data: TimelineData,
   options: Options = {}
 ){
   const margin = { top: 20, right: 20, bottom: 40, left: 240 };
@@ -45,8 +51,13 @@ export function drawEventTimeline(
   const height = 500 - margin.top - margin.bottom;
 
   // Definir o horário do evento
-  const eventStart = new Date('2024-01-01T13:00');
-  const eventEnd   = new Date('2024-01-01T15:00');
+  // const eventStart = new Date('2024-01-01T13:00');
+  // const eventEnd   = new Date('2024-01-01T15:00');
+
+  //Definindo duração do evento
+  console.log("Event duration");
+  const eventDuration = (data.event.end.getTime() - data.event.start.getTime() / (1000*60)); // Em minutos
+  console.log("Event duration"+eventDuration);
 
   let delayThreshold = options.initialDelay ?? 15; // começa em 15 minutos
 
@@ -85,14 +96,18 @@ export function drawEventTimeline(
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
   // Escalas
-  const x = d3
-    .scaleTime()
-    .domain([new Date('2024-01-01T12:00'), new Date('2024-01-01T16:00')])
-    // .domain([data.event.start, data.event.end])
+  const marginMinutes = 30; // minutos extras
+  const ms = marginMinutes * 60 * 1000; // converter para ms
+
+  const x = d3.scaleTime()
+    .domain([
+      new Date(data.event.start.getTime() - ms), // 30 min antes
+      new Date(data.event.end.getTime() + ms)    // 30 min depois
+    ])
     .range([0, width]);
 
   const y = d3.scaleBand()
-    .domain(data.map(d => d.name))
+    .domain(data.students.map(d => d.name))
     .range([0, height])
     .padding(0);
 
@@ -102,7 +117,7 @@ export function drawEventTimeline(
     // .attr("transform", `translate(10, ${margin.top})`) // 10 px da borda
   
   labelGroup.selectAll(".student-label")
-    .data(data)
+    .data(data.students)
     .join("g")
     .attr("class", "student-label")
     .attr("transform", d=> `translate(0, ${y(d.name)!+margin.top})`) //adc margin.top
@@ -178,9 +193,9 @@ export function drawEventTimeline(
 
   // Fundo do evento - Retângulo cinza claro ao fundo, cobrindo todos os alunos
   chartArea.append('rect')
-    .attr('x', x(eventStart))
+    .attr('x', x(data.event.start))
     .attr('y', 0)
-    .attr('width', x(eventEnd) - x(eventStart))
+    .attr('width', x(data.event.end) - x(data.event.start))
     .attr('height', height)
     .attr('fill', '#e0e0e05a')
     .lower(); // envia para o fundo, atrás das barras
@@ -193,7 +208,7 @@ export function drawEventTimeline(
 
   // Zebra - Desenhar faixas de fundo alternadas
   svg.selectAll('.row-bg')
-    .data(data)
+    .data(data.students)
     .join('rect')
     .attr('class', 'row-bg')
     .attr('x', 0)
@@ -204,42 +219,57 @@ export function drawEventTimeline(
     // .attr('fill-opacity', 1) // opacidade reduzida;
     .lower();
 
+    //Fundo cinza por estudante
+    const backgrounds = chartArea
+      .selectAll("student-bg")
+      .data(data.students, d => d.name);  // chaveando pelo nome do aluno
+  
+    backgrounds.join("rect")
+        .attr("x", 0) // começa logo depois do avatar
+        .attr("y", d => (y(d.name)!+ (y.bandwidth() / 6)*2) ) // centralizar verticalmente
+        .attr("width", width) // ocupa o resto
+        .attr("height", y.bandwidth() / 3) // mais fino que a faixa inteira
+        .attr("fill", "#00000011")
+        .lower()
+
+
 
 
   // Desenhar as barras por estudante
   function updateBars() {
     console.log("updatebars");
-    data.forEach(student => {
+
+    data.students.forEach(student => {
       
       const barheight = 15;
+
+      // Soma total de minutos conectados dentro do evento
+      const totalMinutes = d3.sum(student.sessions, s => getMinutesWithinEvent(s, data.event.start, data.event.end));
+
+
+      // Definição de cor para os segmentos de sessão
+      // const barColor = totalMinutes < delayThreshold ? "#f4b400" : "#2196f3";
+      // const eventDurationMinutes = (data.event.end.getTime() - data.event.start.getTime()) / (1000 * 60);
+
+      const barColor = totalMinutes < delayThreshold 
+        ? "red" // atrasado
+        : totalMinutes >= eventDuration 
+          ? "#2196f3" // participou 100%
+          : "#f4b400"; // participou parcialmente
+      // 66bb6a
+      console.log( student.name + " " + totalMinutes + " minutos = " + barColor);
 
       chartArea
         .selectAll(`.bar-${student.name.replace(/\s+/g, '-')}`)
         .data(student.sessions)
         .join('rect')
         .attr("class", `bar-${student.name.replace(/\s+/g, "-")}`)
-        .attr('x', d => x(d.start))
-        // .attr('y', y(student.name)!+20)
+        .attr("x", d => x(d.start))
         .attr("y", y(student.name)!+ (y.bandwidth() / 4)+ (barheight/2)) // centralizar verticalmente
-        // .attr('height', y.bandwidth())
         .attr('height', barheight)
         .attr('width', d => x(d.end) - x(d.start))
-        .attr('fill', (d)=> {
-          const diffMinutes = (d.start.getTime() - eventStart.getTime()) / (1000 * 60);
-          return diffMinutes > delayThreshold ? "#f4b400": "#2196f3";
-        })
-      
-      chartArea
-        .append("rect")
-        .attr("x", 0) // começa logo depois do avatar
-        .attr("y", y(student.name)!+ (y.bandwidth() / 6)*2 ) // centralizar verticalmente
-        .attr("width", width) // ocupa o resto
-        .attr("height", y.bandwidth() / 3) // mais fino que a faixa inteira
-        .attr("fill", "#00000011")
-        .lower()
-        ; // cinza claro (tailwind gray-200)
+        .attr('fill', barColor);
 
-        
     });
   }
 
