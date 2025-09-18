@@ -56,8 +56,9 @@ export function drawEventTimeline(
 
   //Definindo duração do evento
   console.log("Event duration");
-  const eventDuration = (data.event.end.getTime() - data.event.start.getTime() / (1000*60)); // Em minutos
-  console.log("Event duration"+eventDuration);
+  // const eventDuration = (data.event.end.getTime() - data.event.start.getTime() / (1000*60)); // Em minutos
+  const eventDurationMinutes = (data.event.end.getTime() - data.event.start.getTime()) / (1000 * 60);
+  console.log("Event duration minutes"+eventDurationMinutes);
 
   let delayThreshold = options.initialDelay ?? 15; // começa em 15 minutos
 
@@ -250,10 +251,11 @@ export function drawEventTimeline(
       // Definição de cor para os segmentos de sessão
       // const barColor = totalMinutes < delayThreshold ? "#f4b400" : "#2196f3";
       // const eventDurationMinutes = (data.event.end.getTime() - data.event.start.getTime()) / (1000 * 60);
+      // console.log("Event duration:" + (eventDuration/(1000*60)))
 
       const barColor = totalMinutes < delayThreshold 
         ? "red" // atrasado
-        : totalMinutes >= eventDuration 
+        : totalMinutes >= (eventDurationMinutes - delayThreshold)
           ? "#2196f3" // participou 100%
           : "#f4b400"; // participou parcialmente
       // 66bb6a
