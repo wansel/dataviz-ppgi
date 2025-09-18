@@ -50,10 +50,6 @@ export function drawEventTimeline(
   const width = 900 - margin.left - margin.right;
   const height = 500 - margin.top - margin.bottom;
 
-  // Definir o horário do evento
-  // const eventStart = new Date('2024-01-01T13:00');
-  // const eventEnd   = new Date('2024-01-01T15:00');
-
   //Definindo duração do evento
   console.log("Event duration");
   // const eventDuration = (data.event.end.getTime() - data.event.start.getTime() / (1000*60)); // Em minutos
@@ -233,9 +229,6 @@ export function drawEventTimeline(
         .attr("fill", "#00000011")
         .lower()
 
-
-
-
   // Desenhar as barras por estudante
   function updateBars() {
     console.log("updatebars");
@@ -246,12 +239,6 @@ export function drawEventTimeline(
 
       // Soma total de minutos conectados dentro do evento
       const totalMinutes = d3.sum(student.sessions, s => getMinutesWithinEvent(s, data.event.start, data.event.end));
-
-
-      // Definição de cor para os segmentos de sessão
-      // const barColor = totalMinutes < delayThreshold ? "#f4b400" : "#2196f3";
-      // const eventDurationMinutes = (data.event.end.getTime() - data.event.start.getTime()) / (1000 * 60);
-      // console.log("Event duration:" + (eventDuration/(1000*60)))
 
       const barColor = totalMinutes < delayThreshold 
         ? "red" // atrasado
