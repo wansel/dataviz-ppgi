@@ -233,13 +233,19 @@ export function drawEventTimeline(
   function updateBars() {
     console.log("updatebars");
 
+    // espaço reservado antes das barras para mostrar o texto
+    const infoOffset = 80; // px, ajuste conforme layout
+
+
     data.students.forEach(student => {
       
       const barheight = 15;
 
       // Soma total de minutos conectados dentro do evento
       const totalMinutes = d3.sum(student.sessions, s => getMinutesWithinEvent(s, data.event.start, data.event.end));
-
+      
+      const totalSessions = student.sessions.length;
+      
       const barColor = totalMinutes < delayThreshold 
         ? "red" // atrasado
         : totalMinutes >= (eventDurationMinutes - delayThreshold)
@@ -248,6 +254,20 @@ export function drawEventTimeline(
       // 66bb6a
       console.log( student.name + " " + totalMinutes + " minutos = " + barColor);
 
+      // Coluna de contagem de conexões
+      chartArea
+        .selectAll(`.info-${student.name.replace(/\s+/g, '-')}`)
+        .data([`${Math.round(totalMinutes)}min (${totalSessions}) con.`]) // um item só
+        .join('text')
+        .attr("class", `info-${student.name.replace(/\s+/g, "-")}`)
+        .attr("x", -infoOffset) // posiciona à esquerda das barras, ajuste fino
+        .attr("y", y(student.name)! + (y.bandwidth() / 2) + 5) // centralizado verticalmente
+        .attr("text-anchor", "start")
+        .style("font-size", "12px")
+        .style("fill", "#333")
+        .text(d => d);
+
+      // Desenho das barras
       chartArea
         .selectAll(`.bar-${student.name.replace(/\s+/g, '-')}`)
         .data(student.sessions)
