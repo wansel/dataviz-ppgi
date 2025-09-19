@@ -41,12 +41,16 @@ function getMinutesWithinEvent(session: { start: Date, end: Date }, eventStart: 
   return Math.max(0, (e.getTime() - s.getTime()) / (1000 * 60));
 }
 
+
+
+
 export function drawEventTimeline(
   selector: string,
   data: TimelineData,
   options: Options = {}
 ){
-  const margin = { top: 20, right: 20, bottom: 40, left: 240 };
+  const margin = { top: 50, right: 20, bottom: 40, left: 340 };
+  // margin.left é o espaço reservado para o nome e a coluna de info
   const width = 900 - margin.left - margin.right;
   const height = 500 - margin.top - margin.bottom;
 
@@ -88,6 +92,7 @@ export function drawEventTimeline(
                     0.3333 0.3333 0.3333 0 0 \
                     0      0      0      1 0");
 
+  
   //Grupo principal do gráfico (deslocado pela margem)
   const chartArea = svg.append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
@@ -107,6 +112,58 @@ export function drawEventTimeline(
     .domain(data.students.map(d => d.name))
     .range([0, height])
     .padding(0);
+
+  
+  // Grupo de cabeçalhos
+  const headerGroup = svg.append("g")
+    .attr("class", "headers")
+    .attr("transform", `translate(${margin.left}, ${margin.top - 10})`);
+
+  // ===== Coluna "Estudante"
+  headerGroup.append("text")
+    .attr("x", -margin.left + 10) // volta para a área do label
+    .attr("y", -5)
+    .attr("text-anchor", "start")
+    .style("font-weight", "bold")
+    .style("font-size", "13px")
+    .text("Estudante");
+
+  // ===== Coluna "Tempo/Conexões"
+  headerGroup.append("text")
+    .attr("x", -90) // mesmo alinhamento da info extra
+    .attr("y", -5)
+    .attr("text-anchor", "start")
+    .style("font-weight", "bold")
+    .style("font-size", "13px")
+    .text("Tempo/Conexões");
+
+  // ===== Coluna "Antes"
+  headerGroup.append("text")
+    .attr("x", x(data.event.start) - 10) // um pouco antes do retângulo cinza
+    .attr("y", -5)
+    .attr("text-anchor", "end")
+    // .style("font-weight", "bold")
+    .style("font-size", "13px")
+    .text("Antes");
+
+  // ===== Coluna "Durante"
+  headerGroup.append("text")
+    .attr("x", (x(data.event.start) + x(data.event.end)) / 2) // centraliza no retângulo cinza
+    .attr("y", -5)
+    .attr("text-anchor", "middle")
+    .style("font-weight", "bold")
+    .style("font-size", "13px")
+    .text("Durante");
+
+  // ===== Coluna "Depois"
+  headerGroup.append("text")
+    .attr("x", x(data.event.end) + 20) // logo após o retângulo cinza
+    .attr("y", -5)
+    .attr("text-anchor", "start")
+    // .style("font-weight", "bold")
+    .style("font-size", "13px")
+    .text("Depois");
+
 
   // Labels (ficam em outro grupo, alinhados à esquerda, fora do chartArea)
   const labelGroup = svg.append("g")
@@ -234,7 +291,7 @@ export function drawEventTimeline(
     console.log("updatebars");
 
     // espaço reservado antes das barras para mostrar o texto
-    const infoOffset = 80; // px, ajuste conforme layout
+    const infoOffset = 100; // px, ajuste conforme layout
 
 
     data.students.forEach(student => {
@@ -254,18 +311,48 @@ export function drawEventTimeline(
       // 66bb6a
       console.log( student.name + " " + totalMinutes + " minutos = " + barColor);
 
-      // Coluna de contagem de conexões
-      chartArea
-        .selectAll(`.info-${student.name.replace(/\s+/g, '-')}`)
-        .data([`${Math.round(totalMinutes)}min (${totalSessions}) con.`]) // um item só
-        .join('text')
+      // // Coluna de contagem de conexões
+      // chartArea
+      //   .selectAll(`.info-${student.name.replace(/\s+/g, '-')}`)
+      //   .data([`${Math.round(totalMinutes)}min (${totalSessions}) con.`]) // um item só
+      //   .join('text')
+      //   .attr("class", `info-${student.name.replace(/\s+/g, "-")}`)
+      //   .attr("x", -infoOffset) // posiciona à esquerda das barras, ajuste fino
+      //   .attr("y", y(student.name)! + (y.bandwidth() / 2) + 5) // centralizado verticalmente
+      //   .attr("text-anchor", "start")
+      //   .style("font-size", "12px")
+      //   .style("fill", "#333")
+      //   .text(d => d);
+      // --- coluna de informações ---
+      svg.selectAll(`.info-${student.name.replace(/\s+/g, '-')}`)
+        .data([student])
+        .join("text")
         .attr("class", `info-${student.name.replace(/\s+/g, "-")}`)
-        .attr("x", -infoOffset) // posiciona à esquerda das barras, ajuste fino
-        .attr("y", y(student.name)! + (y.bandwidth() / 2) + 5) // centralizado verticalmente
+        .attr("x", margin.left - 90) // posição dentro da margem reservada
+        .attr("y", margin.top + y(student.name)! + (y.bandwidth() / 2) - 5) // centralizado verticalmente
         .attr("text-anchor", "start")
         .style("font-size", "12px")
         .style("fill", "#333")
-        .text(d => d);
+        .each(function(d) {
+          const text = d3.select(this);
+          text.selectAll("tspan").remove(); // limpa spans antigos
+
+          // converter totalMinutes em horas:minutos
+          const hours = Math.floor(totalMinutes / 60);
+          const minutes = Math.round(totalMinutes % 60);
+          const timeLabel = `${hours > 0 ? hours + "h" : ""}${minutes}m`;
+
+          text.append("tspan")
+            .attr("x", margin.left - 90)
+            .attr("dy", 0) // primeira linha
+            .text(timeLabel);
+
+          text.append("tspan")
+            .attr("x", margin.left - 90)
+            .attr("dy", "1.2em") // segunda linha
+            .text(`${totalSessions} con.`);
+        });
+
 
       // Desenho das barras
       chartArea
