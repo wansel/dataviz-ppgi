@@ -1,5 +1,8 @@
 # DataViz PPGI
 
+Instalado o Node 24.8.0 de https://nodejs.org/pt/download/current
+> No windows, marcada a opção de instalar as ferramentas necessárias (e Chocolatey)
+
 
 Rodando o projeto:
 ```
