@@ -49,7 +49,7 @@ export function drawEventTimeline(
   data: TimelineData,
   options: Options = {}
 ){
-  const margin = { top: 50, right: 20, bottom: 40, left: 340 };
+  const margin = { top: 50, right: 20, bottom: 40, left: 350 };
   // margin.left é o espaço reservado para o nome e a coluna de info
   const width = 900 - margin.left - margin.right;
   const height = 500 - margin.top - margin.bottom;
@@ -162,7 +162,7 @@ export function drawEventTimeline(
 
   // ===== Coluna "Tempo/Conexões"
   headerGroup.append("text")
-    .attr("x", -90)
+    .attr("x", -120)
     .attr("y", 0)
     .attr("class", "sort-header sort-stats cursor-pointer select-none font-semibold text-sm")
     .text("Tempo/Conexões")
@@ -280,7 +280,7 @@ export function drawEventTimeline(
           // 5. Texto de estatísticas (Tempo/Conexões)
           g.append("text")
             .attr("class", "student-stats")
-            .attr("x", -90)
+            .attr("x", -120)
             .attr("y", y.bandwidth() / 2)
             .style("font-size", "12px")
             .attr("dominant-baseline", "central");
@@ -305,6 +305,7 @@ export function drawEventTimeline(
 
     // Após criar a estrutura, atualiza os elementos dinâmicos (cores e texto)
     updateColorsAndStats(studentRowGroups);
+    updateHeaderIcons();
   }
 
   /**
@@ -339,8 +340,8 @@ export function drawEventTimeline(
       const hours = Math.floor(totalMinutes / 60);
       const minutes = Math.round(totalMinutes % 60);
       const timeLabel = `${hours > 0 ? hours + "h" : ""}${minutes}m`;
-      statsText.append("tspan").attr("x", -90).attr("dy", "-0.5em").text(timeLabel);
-      statsText.append("tspan").attr("x", -90).attr("dy", "1.2em").text(`${totalSessions} con.`);
+      statsText.append("tspan").attr("x", -120).attr("dy", "-0.5em").text(timeLabel);
+      statsText.append("tspan").attr("x", -120).attr("dy", "1.2em").text(`${totalSessions} con.`);
 
       // Atualiza barras de sessão (Data Join aninhado)
       studentRow.select<SVGGElement>(".session-bars-container")
