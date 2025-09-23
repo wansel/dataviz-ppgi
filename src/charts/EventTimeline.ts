@@ -31,6 +31,10 @@ interface Options {
   height?: number;
   box?: number;
   initialDelay?: number; // valor inicial do atraso (minutos)
+  initialSort?: {
+    column: "name" | "stats";
+    order?: "asc" | "desc"; // A ordem também pode ser opcional, com 'asc' como padrão
+  }
 }
 
 function getMinutesWithinEvent(session: { start: Date, end: Date }, eventStart: Date, eventEnd: Date) {
@@ -53,6 +57,36 @@ export function drawEventTimeline(
   //Definindo duração do evento
   const eventDurationMinutes = (data.event.end.getTime() - data.event.start.getTime()) / (1000 * 60);
   let delayThreshold = options.initialDelay ?? 15;
+
+  // 1. Define o estado da ordenação com base nas opções ou no padrão.
+  let sortBy: { column: "name" | "stats" | null, order: "asc" | "desc" };
+  if (options.initialSort) {
+    // Se uma ordenação foi passada nas opções, use-a.
+    sortBy = {
+      column: options.initialSort.column,
+      order: options.initialSort.order || "asc" // 'asc' é o padrão se a ordem não for especificada
+    };
+  } else {
+    // CASO CONTRÁRIO, DEFINE O PADRÃO: alfabético por nome.
+    sortBy = {
+      column: "name",
+      order: "asc"
+    };
+  }
+  // 2. Aplica a ordenação inicial ao array de dados.
+  // Isso garante que os dados já estejam na ordem correta antes do desenho.
+  if (sortBy.column) {
+    const sortOrder = sortBy.order === "asc" ? d3.ascending : d3.descending;
+    data.students.sort((a, b) => {
+      if (sortBy.column === 'name') {
+        return sortOrder(a.name, b.name);
+      } else { // 'stats'
+        const totalA = d3.sum(a.sessions, s => getMinutesWithinEvent(s, data.event.start, data.event.end));
+        const totalB = d3.sum(b.sessions, s => getMinutesWithinEvent(s, data.event.start, data.event.end));
+        return sortOrder(totalA, totalB);
+      }
+    });
+  }
 
   // Container principal
   const container = d3.select(selector);
@@ -99,10 +133,10 @@ export function drawEventTimeline(
 
   
   // Estado da Ordenação
-  let sortBy: { column: "name" | "stats" | null, order: "asc" | "desc" } = {
-    column: null,
-    order: "asc"
-  };
+  // let sortBy: { column: "name" | "stats" | null, order: "asc" | "desc" } = {
+  //   column: null,
+  //   order: "asc"
+  // };
 
   // Fundo do evento (retângulo cinza)
   chartArea.append('rect')
@@ -129,8 +163,8 @@ export function drawEventTimeline(
   headerGroup.append("text")
     .attr("x", -margin.left + 10)
     .attr("y", 0)
-    .attr("class", "cursor-pointer select-none font-semibold text-sm")
-    .text("Estudante ▲▼")
+    .attr("class", "sort-header sort-name cursor-pointer select-none font-semibold text-sm")
+    .text("Estudante")
     .on("click", () => handleSort("name"));
 
 
@@ -138,8 +172,8 @@ export function drawEventTimeline(
   headerGroup.append("text")
     .attr("x", -90)
     .attr("y", 0)
-    .attr("class", "cursor-pointer select-none font-semibold text-sm")
-    .text("Tempo/Conexões ▲▼")
+    .attr("class", "sort-header sort-stats cursor-pointer select-none font-semibold text-sm")
+    .text("Tempo/Conexões")
     .on("click", () => handleSort("stats"));
 
 
@@ -197,6 +231,7 @@ export function drawEventTimeline(
             .attr("width", width + margin.left + margin.right)
             .attr("height", y.bandwidth())
             .attr("fill", (_, i) => (i % 2 === 0 ? '#FFFFFF' : '#F8F8F8'))
+            .attr('fill-opacity', 0.5) // opacidade reduzida;
             .lower();
 
           // 2. Avatar
@@ -360,9 +395,40 @@ export function drawEventTimeline(
       .attr("fill", (_, i) => {
         // Agora o 'i' está correto!
         return i % 2 === 0 ? '#FFFFFF' : '#F8F8F8';
-      });
+      })
+      // .attr('fill-opacity', 0.7) // opacidade reduzida;
+      ;
   }
   
+
+  /**
+   * Atualiza os ícones de ordenação e o estilo dos cabeçalhos
+   * com base no estado atual da variável `sortBy`.
+   */
+  function updateHeaderIcons() {
+    // Seleciona os dois cabeçalhos usando as classes que adicionamos
+    const nameHeader = headerGroup.select(".sort-name");
+    const statsHeader = headerGroup.select(".sort-stats");
+    
+    // Define o ícone de seta (▲ para asc, ▼ para desc)
+    const icon = sortBy.order === 'asc' ? ' ▲' : ' ▼';
+
+    // Atualiza o cabeçalho "Estudante"
+    if (sortBy.column === 'name') {
+      nameHeader.text("Estudante" + icon);
+      // D3.classed() é uma forma fácil de adicionar/remover uma classe
+      nameHeader.classed("font-bold", true); // Deixa em negrito se estiver ativo
+      statsHeader.classed("font-bold", false).text("Tempo/Conexões"); // Garante que o outro fique normal
+    } 
+    // Atualiza o cabeçalho "Tempo/Conexões"
+    else if (sortBy.column === 'stats') {
+      statsHeader.text("Tempo/Conexões" + icon);
+      statsHeader.classed("font-bold", true); // Deixa em negrito se estiver ativo
+      nameHeader.classed("font-bold", false).text("Estudante"); // Garante que o outro fique normal
+    }
+  }
+
+
   /**
    * Centraliza a lógica de clique nos cabeçalhos para ordenação
    */
@@ -373,6 +439,9 @@ export function drawEventTimeline(
         sortBy.column = column;
         sortBy.order = "asc";
       }
+
+      // ✨ CHAMA A FUNÇÃO PARA ATUALIZAR OS ÍCONES IMEDIATAMENTE ✨
+      updateHeaderIcons();
       
       const sortOrder = sortBy.order === "asc" ? d3.ascending : d3.descending;
 

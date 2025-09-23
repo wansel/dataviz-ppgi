@@ -60,7 +60,7 @@ const datagraf4 = {
       ],
     },
     {
-      name: 'Édson Fernandes Rodrigues',
+      name: 'Edson Fernandes Rodrigues',
       avatar: '/img/students/m60.jpg',
       sessions: [
         { start: new Date('2024-01-01T12:50'), end: new Date('2024-01-01T14:10') },
