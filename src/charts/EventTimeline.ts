@@ -24,8 +24,8 @@ interface TimelineData {
 }
 
 interface Options {
-  title: string,
-  subtitle: string,
+  title?: string,
+  subtitle?: string,
   imgPath?: string;
   width?: number;
   height?: number;
@@ -119,7 +119,6 @@ export function drawEventTimeline(
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
   // Escalas
-// Escalas
   const marginMinutes = 30;
   const ms = marginMinutes * 60 * 1000;
   const x = d3.scaleTime()
@@ -131,12 +130,6 @@ export function drawEventTimeline(
     .range([0, height])
     .padding(0);
 
-  
-  // Estado da Ordenação
-  // let sortBy: { column: "name" | "stats" | null, order: "asc" | "desc" } = {
-  //   column: null,
-  //   order: "asc"
-  // };
 
   // Fundo do evento (retângulo cinza)
   chartArea.append('rect')
@@ -152,8 +145,7 @@ export function drawEventTimeline(
     .attr('transform', `translate(0,${height})`)
     .call(d3.axisBottom(x).ticks(d3.timeHour.every(1)).tickFormat(d3.timeFormat('%H:%M')));
 
-
-
+  // Construção dos cabeçalhos
   // Grupo de cabeçalhos
   const headerGroup = svg.append("g")
     .attr("class", "headers")
@@ -204,9 +196,6 @@ export function drawEventTimeline(
     .style("font-size", "13px")
     .text("Depois");
 
-  // =================================================================
-  // ✨ INÍCIO DA REATORAÇÃO PRINCIPAL ✨
-  // =================================================================
 
   /**
    * Função principal que cria e posiciona todas as linhas de estudantes.
@@ -440,7 +429,7 @@ export function drawEventTimeline(
         sortBy.order = "asc";
       }
 
-      // ✨ CHAMA A FUNÇÃO PARA ATUALIZAR OS ÍCONES IMEDIATAMENTE ✨
+      // Atualiza os ícones indicadores de ordenação
       updateHeaderIcons();
       
       const sortOrder = sortBy.order === "asc" ? d3.ascending : d3.descending;
@@ -458,10 +447,6 @@ export function drawEventTimeline(
       updateScalesAndRedraw();
   }
 
-
-  // =================================================================
-  // ✨ FIM DA REATORAÇÃO PRINCIPAL ✨
-  // =================================================================
 
   // Controles (Input de Atraso)
   const controls = container.append("div").attr("class", "mt-4 flex justify-center items-center gap-2");
