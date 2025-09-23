@@ -42,8 +42,6 @@ function getMinutesWithinEvent(session: { start: Date, end: Date }, eventStart: 
 }
 
 
-
-
 export function drawEventTimeline(
   selector: string,
   data: TimelineData,
@@ -114,6 +112,14 @@ export function drawEventTimeline(
     .padding(0);
 
   
+  // Estado da Ordenação
+  let sortBy: { column: "name" | "stats" | null, order: "asc" | "desc" } = {
+    column: null,
+    order: "asc"
+  };
+
+
+
   // Grupo de cabeçalhos
   const headerGroup = svg.append("g")
     .attr("class", "headers")
@@ -122,20 +128,62 @@ export function drawEventTimeline(
   // ===== Coluna "Estudante"
   headerGroup.append("text")
     .attr("x", -margin.left + 10) // volta para a área do label
-    .attr("y", -5)
-    .attr("text-anchor", "start")
-    .style("font-weight", "bold")
-    .style("font-size", "13px")
-    .text("Estudante");
+    .attr("y", -5) // ou -20
+    // .attr("text-anchor", "start")
+    // .style("font-weight", "bold")
+    // .style("font-size", "13px")
+    // .text("Estudante");
+    .attr("class", "cursor-pointer select-none")
+    .text("Estudante ▲▼")
+    .on("click", () => {
+      // Alternar ordem
+      if (sortBy.column === "name") {
+        sortBy.order = sortBy.order === "asc" ? "desc" : "asc";
+      } else {
+        sortBy.column = "name";
+        sortBy.order = "asc";
+      }
+
+      // Ordenar dados
+      data.students.sort((a, b) => {
+        return sortBy.order === "asc"
+          ? d3.ascending(a.name, b.name)
+          : d3.descending(a.name, b.name);
+      });
+
+      updateScalesAndRedraw();
+    });
+
 
   // ===== Coluna "Tempo/Conexões"
   headerGroup.append("text")
     .attr("x", -90) // mesmo alinhamento da info extra
     .attr("y", -5)
-    .attr("text-anchor", "start")
-    .style("font-weight", "bold")
-    .style("font-size", "13px")
-    .text("Tempo/Conexões");
+    // .attr("text-anchor", "start")
+    // .style("font-weight", "bold")
+    // .style("font-size", "13px")
+    // .text("Tempo/Conexões");
+    .attr("class", "cursor-pointer select-none")
+    .text("Tempo/Conexões ▲▼")
+    .on("click", () => {
+      if (sortBy.column === "stats") {
+        sortBy.order = sortBy.order === "asc" ? "desc" : "asc";
+      } else {
+        sortBy.column = "stats";
+        sortBy.order = "asc";
+      }
+
+      data.students.sort((a, b) => {
+        const totalA = d3.sum(a.sessions, s => (s.end.getTime() - s.start.getTime()) / (1000*60));
+        const totalB = d3.sum(b.sessions, s => (s.end.getTime() - s.start.getTime()) / (1000*60));
+        return sortBy.order === "asc"
+          ? d3.ascending(totalA, totalB)
+          : d3.descending(totalA, totalB);
+      });
+
+      updateScalesAndRedraw();
+    });
+
 
   // ===== Coluna "Antes"
   headerGroup.append("text")
@@ -324,9 +372,10 @@ export function drawEventTimeline(
       //   .style("fill", "#333")
       //   .text(d => d);
       // --- coluna de informações ---
-      svg.selectAll(`.info-${student.name.replace(/\s+/g, '-')}`)
+      const statsGroup = svg.selectAll(`.info-${student.name.replace(/\s+/g, '-')}`)
         .data([student])
         .join("text")
+        .attr("class", "stats-gruop")
         .attr("class", `info-${student.name.replace(/\s+/g, "-")}`)
         .attr("x", margin.left - 90) // posição dentro da margem reservada
         .attr("y", margin.top + y(student.name)! + (y.bandwidth() / 2) - 5) // centralizado verticalmente
@@ -394,5 +443,29 @@ export function drawEventTimeline(
     delayThreshold = parseInt((this as HTMLInputElement).value, 10) || 0;
     updateBars();
   });
+
+  //Sempre que ordenar, atualiza a escala y e aplica a transição aos elementos
+  function updateScalesAndRedraw() {
+    // Atualiza domínio da escala Y
+    y.domain(data.students.map(d => d.name));
+
+    // Transição suave
+    const t = svg.transition().duration(750);
+
+    // Atualiza labels
+    labelGroup.selectAll(".student-label")
+      .transition(t)
+      .attr("transform", d => `translate(0, ${y(d.name)!+margin.top})`);
+
+    // Atualiza col de stats
+    statsGroup.selectAll(".student-stats")
+      .transition(t)
+      .attr("transform", d => `translate(${statsX}, ${y(d.name)!+margin.top})`);
+
+    // Atualiza barras
+    chartArea.selectAll("rect")
+      .transition(t)
+      .attr("y", d => y((d as any).studentName)! + (y.bandwidth() / 4));
+}
 }
 
