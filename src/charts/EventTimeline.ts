@@ -1,7 +1,5 @@
 import * as d3 from 'd3';
 
-
-
 interface Session {
   start: Date;
   end: Date;
@@ -51,30 +49,21 @@ export function drawEventTimeline(
   // margin.left é o espaço reservado para o nome e a coluna de info
   const width = 900 - margin.left - margin.right;
   const height = 500 - margin.top - margin.bottom;
-
+  
   //Definindo duração do evento
-  console.log("Event duration");
-  // const eventDuration = (data.event.end.getTime() - data.event.start.getTime() / (1000*60)); // Em minutos
   const eventDurationMinutes = (data.event.end.getTime() - data.event.start.getTime()) / (1000 * 60);
-  console.log("Event duration minutes"+eventDurationMinutes);
-
-  let delayThreshold = options.initialDelay ?? 15; // começa em 15 minutos
+  let delayThreshold = options.initialDelay ?? 15;
 
   // Container principal
   const container = d3.select(selector);
-  const containerNode = container.node();
-  
-  if(!containerNode) {
+  if (container.empty()) {
     console.error(`Elemento não encontrado para o seletor: "${selector}"`);
-    return; // Interrompe a função se o container não existir
+    return;
   }
-    const containerWidth = containerNode.getBoundingClientRect().width;
-    console.log(`A largura do container é: ${containerWidth}`);
-  
-  
-  // SVG principal
+  // Limpa o conteúdo anterior para evitar duplicatas ao redesenhar
+  container.html("");
+
   const svg = container
-    // .select(selector)
     .append('svg')
     .attr('width', width + margin.left + margin.right)
     .attr('height', height + margin.top + margin.bottom);
@@ -96,14 +85,11 @@ export function drawEventTimeline(
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
   // Escalas
-  const marginMinutes = 30; // minutos extras
-  const ms = marginMinutes * 60 * 1000; // converter para ms
-
+// Escalas
+  const marginMinutes = 30;
+  const ms = marginMinutes * 60 * 1000;
   const x = d3.scaleTime()
-    .domain([
-      new Date(data.event.start.getTime() - ms), // 30 min antes
-      new Date(data.event.end.getTime() + ms)    // 30 min depois
-    ])
+    .domain([new Date(data.event.start.getTime() - ms), new Date(data.event.end.getTime() + ms)])
     .range([0, width]);
 
   const y = d3.scaleBand()
@@ -118,71 +104,43 @@ export function drawEventTimeline(
     order: "asc"
   };
 
+  // Fundo do evento (retângulo cinza)
+  chartArea.append('rect')
+    .attr('x', x(data.event.start))
+    .attr('y', 0)
+    .attr('width', x(data.event.end) - x(data.event.start))
+    .attr('height', height)
+    .attr('fill', '#e0e0e05a')
+    .lower();
+
+  // Eixo X
+  chartArea.append('g')
+    .attr('transform', `translate(0,${height})`)
+    .call(d3.axisBottom(x).ticks(d3.timeHour.every(1)).tickFormat(d3.timeFormat('%H:%M')));
+
 
 
   // Grupo de cabeçalhos
   const headerGroup = svg.append("g")
     .attr("class", "headers")
-    .attr("transform", `translate(${margin.left}, ${margin.top - 10})`);
+    .attr("transform", `translate(${margin.left}, ${margin.top - 20})`); // Era - 10
 
   // ===== Coluna "Estudante"
   headerGroup.append("text")
-    .attr("x", -margin.left + 10) // volta para a área do label
-    .attr("y", -5) // ou -20
-    // .attr("text-anchor", "start")
-    // .style("font-weight", "bold")
-    // .style("font-size", "13px")
-    // .text("Estudante");
-    .attr("class", "cursor-pointer select-none")
+    .attr("x", -margin.left + 10)
+    .attr("y", 0)
+    .attr("class", "cursor-pointer select-none font-semibold text-sm")
     .text("Estudante ▲▼")
-    .on("click", () => {
-      // Alternar ordem
-      if (sortBy.column === "name") {
-        sortBy.order = sortBy.order === "asc" ? "desc" : "asc";
-      } else {
-        sortBy.column = "name";
-        sortBy.order = "asc";
-      }
-
-      // Ordenar dados
-      data.students.sort((a, b) => {
-        return sortBy.order === "asc"
-          ? d3.ascending(a.name, b.name)
-          : d3.descending(a.name, b.name);
-      });
-
-      updateScalesAndRedraw();
-    });
+    .on("click", () => handleSort("name"));
 
 
   // ===== Coluna "Tempo/Conexões"
   headerGroup.append("text")
-    .attr("x", -90) // mesmo alinhamento da info extra
-    .attr("y", -5)
-    // .attr("text-anchor", "start")
-    // .style("font-weight", "bold")
-    // .style("font-size", "13px")
-    // .text("Tempo/Conexões");
-    .attr("class", "cursor-pointer select-none")
+    .attr("x", -90)
+    .attr("y", 0)
+    .attr("class", "cursor-pointer select-none font-semibold text-sm")
     .text("Tempo/Conexões ▲▼")
-    .on("click", () => {
-      if (sortBy.column === "stats") {
-        sortBy.order = sortBy.order === "asc" ? "desc" : "asc";
-      } else {
-        sortBy.column = "stats";
-        sortBy.order = "asc";
-      }
-
-      data.students.sort((a, b) => {
-        const totalA = d3.sum(a.sessions, s => (s.end.getTime() - s.start.getTime()) / (1000*60));
-        const totalB = d3.sum(b.sessions, s => (s.end.getTime() - s.start.getTime()) / (1000*60));
-        return sortBy.order === "asc"
-          ? d3.ascending(totalA, totalB)
-          : d3.descending(totalA, totalB);
-      });
-
-      updateScalesAndRedraw();
-    });
+    .on("click", () => handleSort("stats"));
 
 
   // ===== Coluna "Antes"
@@ -212,224 +170,234 @@ export function drawEventTimeline(
     .style("font-size", "13px")
     .text("Depois");
 
+  // =================================================================
+  // ✨ INÍCIO DA REATORAÇÃO PRINCIPAL ✨
+  // =================================================================
 
-  // Labels (ficam em outro grupo, alinhados à esquerda, fora do chartArea)
-  const labelGroup = svg.append("g")
-    .attr("class", "labels");
-    // .attr("transform", `translate(10, ${margin.top})`) // 10 px da borda
-  
-  labelGroup.selectAll(".student-label")
-    .data(data.students)
-    .join("g")
-    .attr("class", "student-label")
-    .attr("transform", d=> `translate(0, ${y(d.name)!+margin.top})`) //adc margin.top
-    .each(function(d) {
-      const g = d3.select(this)
-      const avatarSize = y.bandwidth() * 0.8;
+  /**
+   * Função principal que cria e posiciona todas as linhas de estudantes.
+   */
+  function redraw() {
+    // Vincula os dados a grupos <g>, usando o nome do estudante como chave.
+    // A chave é crucial para que o D3 mantenha a correspondência correta dos elementos durante as atualizações.
+    const studentRowGroups = chartArea.selectAll<SVGGElement, StudentData>(".student-row")
+      .data(data.students, d => d.name)
+      .join(
+        // ENTER: Cria a estrutura base para cada novo estudante.
+        enter => {
+          const g = enter.append("g")
+            .attr("class", "student-row")
+            .attr("transform", d => `translate(0, ${y(d.name)!})`);
 
-      // Para cada g, append image
-      g.append("image")
-        .attr("x", 0)
-        .attr("y", (y.bandwidth() - avatarSize) / 2) // centraliza verticalmente
-        .attr("width", avatarSize)
-        .attr("height", avatarSize)
-        .attr("href", d.avatar)
-        .attr("clip-path", "circle(50%)")
-        .attr("filter", d.sessions.length === 0? "url(#grayscale)" : null ) // aplica P&B
-        .on("mouseover", function(_, d) {
-          d3.select(this).attr("filter", null);
-        })
-        .on("mouseout", function(_,d) {
-          if (d.sessions.length === 0) {
-            d3.select(this).attr("filter", "url(#grayscale)"); //aplica de novo
-          }
-        });
-      
-      // Ícone de desconexão
-      const iconSize = 16; // tamanho do ícone (ex: alerta vermelho)
-      const iconOffset = 4; // margem interna
+          // 1. Fundo da linha (Zebra)
+          g.append("rect")
+            .attr("class", "row-bg")
+            .attr("x", -margin.left)
+            .attr("y", 0)
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", y.bandwidth())
+            .attr("fill", (_, i) => (i % 2 === 0 ? '#FFFFFF' : '#F8F8F8'))
+            .lower();
 
-      g.append("image")
-        .attr("class", "studant-avatar")
-        .attr("xlink:href", d => d.sessions.length === 0 ? "/img/offline.png" : null)
-          .attr("x", 0) // canto superior direito
-          .attr("y", d => iconOffset)
-          .attr("width", iconSize)
-          .attr("height", iconSize); 
+          // 2. Avatar
+          const avatarSize = y.bandwidth() * 0.8;
+          g.append("image")
+            .attr("class", "student-avatar")
+            .attr("x", -margin.left + 10)
+            .attr("y", (y.bandwidth() - avatarSize) / 2)
+            .attr("width", avatarSize)
+            .attr("height", avatarSize)
+            .attr("href", d => d.avatar)
+            .attr("clip-path", "circle(50%)");
 
-      // texto com quebra de linha
-      const maxChars = 20;
-      const words = d.name.split(" ");
-      const padding = 6; 
+          // 3. Ícone de status (offline)
+          g.append("image")
+            .attr("class", "status-icon")
+            .attr("xlink:href", d => d.sessions.length === 0 ? "/img/offline.png" : null)
+            .attr("x", -margin.left + 10)
+            .attr("y", 4)
+            .attr("width", 16)
+            .attr("height", 16);
 
-      let line = "";
-      let lines: string[] = [];
+          // 4. Nome do estudante (com quebra de linha)
+          const nameText = g.append("text")
+            .attr("class", "student-name")
+            .attr("x", -margin.left + 10 + avatarSize + 6)
+            .attr("y", y.bandwidth() / 2)
+            .style("font-size", "12px")
+            .attr("dominant-baseline", "central");
 
-      words.forEach(w=>{
-        if ((line + " " + w).trim().length > maxChars) {
-          lines.push(line.trim());
-          line = w;
-        } else {
-          line += " " + w;
+          nameText.each(function(d) {
+              const textElement = d3.select(this);
+              const maxChars = 20;
+              const words = d.name.split(" ");
+              let line = "";
+              const lines: string[] = [];
+              words.forEach(w => {
+                  if ((line + " " + w).trim().length > maxChars) {
+                      lines.push(line.trim());
+                      line = w;
+                  } else {
+                      line = (line + " " + w).trim();
+                  }
+              });
+              if (line) lines.push(line.trim());
+              
+              textElement.attr("y", y.bandwidth() / 2 - (lines.length -1) * 7); // Ajuste vertical para múltiplas linhas
+
+              lines.forEach((ln, i) => {
+                  textElement.append("tspan")
+                      .attr("x", -margin.left + 10 + avatarSize + 6)
+                      .attr("dy", i === 0 ? 0 : "1.2em")
+                      .text(ln);
+              });
+          });
+
+          // 5. Texto de estatísticas (Tempo/Conexões)
+          g.append("text")
+            .attr("class", "student-stats")
+            .attr("x", -90)
+            .attr("y", y.bandwidth() / 2)
+            .style("font-size", "12px")
+            .attr("dominant-baseline", "central");
+
+          // 6. Fundo cinza claro para a área das barras
+          g.append("rect")
+            .attr("class", "timeline-bg")
+            .attr("x", 0)
+            .attr("y", y.bandwidth() / 3)
+            .attr("width", width)
+            .attr("height", y.bandwidth() / 3)
+            .attr("fill", "#00000011")
+            .lower();
+
+          // 7. Container para as barras de sessão
+          g.append("g")
+            .attr("class", "session-bars-container");
+
+          return g;
         }
-      });
-      if (line) lines.push(line.trim());
-      
-      // nome dos estudantes
-      const text = g.append("text")
-        .attr("x", avatarSize + padding)  // desloca para a direita do avatar
-        .attr("y", y.bandwidth() / 2 - (lines.length - 1) * 6) // sobe se tiver mais de 1 linha
-        .attr("text-anchor", "start")
-        .style("font-size", "12px");
+      );
 
-      // Adicionar <tspan> para cada linha
-      lines.forEach((ln, i) => {
-        text.append("tspan")
-          .attr("x", avatarSize + padding) // mantém alinhado com a primeira linha
-          .attr("dy", i === 0 ? 0 : "1.2em") // espaçamento entre linhas
-          .text(ln);
-      });
+    // Após criar a estrutura, atualiza os elementos dinâmicos (cores e texto)
+    updateColorsAndStats(studentRowGroups);
+  }
 
+  /**
+   * Atualiza apenas os elementos que dependem do `delayThreshold` (cores e estatísticas).
+   * É mais leve do que redesenhar tudo.
+   * @param selection A seleção D3 dos grupos de estudantes a serem atualizados.
+   */
+  function updateColorsAndStats(selection: d3.Selection<SVGGElement, StudentData, SVGGElement, unknown>) {
+    const barHeight = 15;
 
-    })  
+    selection.each(function(d) {
+      const studentRow = d3.select(this);
 
-  // Fundo do evento - Retângulo cinza claro ao fundo, cobrindo todos os alunos
-  chartArea.append('rect')
-    .attr('x', x(data.event.start))
-    .attr('y', 0)
-    .attr('width', x(data.event.end) - x(data.event.start))
-    .attr('height', height)
-    .attr('fill', '#e0e0e05a')
-    .lower(); // envia para o fundo, atrás das barras
-
-
-  // Axis
-  chartArea.append('g')
-    .attr('transform', `translate(0,${height})`)
-    .call((g) => g.call(d3.axisBottom(x).ticks(d3.timeHour.every(1)).tickFormat(d3.timeFormat('%H:%M'))));
-
-  // Zebra - Desenhar faixas de fundo alternadas
-  svg.selectAll('.row-bg')
-    .data(data.students)
-    .join('rect')
-    .attr('class', 'row-bg')
-    .attr('x', 0)
-    .attr('y', d => y(d.name)!+margin.top) // adc margin.top
-    .attr('width', width)
-    .attr('height', y.bandwidth())
-    .attr('fill', (_, i) => (i % 2 === 0 ? '#FFFFFF' : '#F8F8F8'))
-    // .attr('fill-opacity', 1) // opacidade reduzida;
-    .lower();
-
-    //Fundo cinza por estudante
-    const backgrounds = chartArea
-      .selectAll("student-bg")
-      .data(data.students, d => d.name);  // chaveando pelo nome do aluno
-  
-    backgrounds.join("rect")
-        .attr("x", 0) // começa logo depois do avatar
-        .attr("y", d => (y(d.name)!+ (y.bandwidth() / 6)*2) ) // centralizar verticalmente
-        .attr("width", width) // ocupa o resto
-        .attr("height", y.bandwidth() / 3) // mais fino que a faixa inteira
-        .attr("fill", "#00000011")
-        .lower()
-
-  // Desenhar as barras por estudante
-  function updateBars() {
-    console.log("updatebars");
-
-    // espaço reservado antes das barras para mostrar o texto
-    const infoOffset = 100; // px, ajuste conforme layout
-
-
-    data.students.forEach(student => {
-      
-      const barheight = 15;
-
-      // Soma total de minutos conectados dentro do evento
-      const totalMinutes = d3.sum(student.sessions, s => getMinutesWithinEvent(s, data.event.start, data.event.end));
-      
-      const totalSessions = student.sessions.length;
-      
-      const barColor = totalMinutes < delayThreshold 
-        ? "red" // atrasado
+      // --- Cálculos ---
+      const totalMinutes = d3.sum(d.sessions, s => getMinutesWithinEvent(s, data.event.start, data.event.end));
+      const totalSessions = d.sessions.length;
+      const barColor = totalMinutes < delayThreshold
+        ? "red"
         : totalMinutes >= (eventDurationMinutes - delayThreshold)
-          ? "#2196f3" // participou 100%
-          : "#f4b400"; // participou parcialmente
-      // 66bb6a
-      console.log( student.name + " " + totalMinutes + " minutos = " + barColor);
+        ? "#2196f3"
+        : "#f4b400";
 
-      // // Coluna de contagem de conexões
-      // chartArea
-      //   .selectAll(`.info-${student.name.replace(/\s+/g, '-')}`)
-      //   .data([`${Math.round(totalMinutes)}min (${totalSessions}) con.`]) // um item só
-      //   .join('text')
-      //   .attr("class", `info-${student.name.replace(/\s+/g, "-")}`)
-      //   .attr("x", -infoOffset) // posiciona à esquerda das barras, ajuste fino
-      //   .attr("y", y(student.name)! + (y.bandwidth() / 2) + 5) // centralizado verticalmente
-      //   .attr("text-anchor", "start")
-      //   .style("font-size", "12px")
-      //   .style("fill", "#333")
-      //   .text(d => d);
-      // --- coluna de informações ---
-      const statsGroup = svg.selectAll(`.info-${student.name.replace(/\s+/g, '-')}`)
-        .data([student])
-        .join("text")
-        .attr("class", "stats-gruop")
-        .attr("class", `info-${student.name.replace(/\s+/g, "-")}`)
-        .attr("x", margin.left - 90) // posição dentro da margem reservada
-        .attr("y", margin.top + y(student.name)! + (y.bandwidth() / 2) - 5) // centralizado verticalmente
-        .attr("text-anchor", "start")
-        .style("font-size", "12px")
-        .style("fill", "#333")
-        .each(function(d) {
-          const text = d3.select(this);
-          text.selectAll("tspan").remove(); // limpa spans antigos
+      // --- Atualizações ---
 
-          // converter totalMinutes em horas:minutos
-          const hours = Math.floor(totalMinutes / 60);
-          const minutes = Math.round(totalMinutes % 60);
-          const timeLabel = `${hours > 0 ? hours + "h" : ""}${minutes}m`;
+      // Atualiza filtro do avatar
+      studentRow.select<SVGImageElement>(".student-avatar")
+        .attr("filter", totalSessions === 0 ? "url(#grayscale)" : null);
 
-          text.append("tspan")
-            .attr("x", margin.left - 90)
-            .attr("dy", 0) // primeira linha
-            .text(timeLabel);
+      // Atualiza texto de estatísticas
+      const statsText = studentRow.select<SVGTextElement>(".student-stats");
+      statsText.selectAll("tspan").remove(); // Limpa antes de adicionar
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = Math.round(totalMinutes % 60);
+      const timeLabel = `${hours > 0 ? hours + "h" : ""}${minutes}m`;
+      statsText.append("tspan").attr("x", -90).attr("dy", "-0.5em").text(timeLabel);
+      statsText.append("tspan").attr("x", -90).attr("dy", "1.2em").text(`${totalSessions} con.`);
 
-          text.append("tspan")
-            .attr("x", margin.left - 90)
-            .attr("dy", "1.2em") // segunda linha
-            .text(`${totalSessions} con.`);
-        });
-
-
-      // Desenho das barras
-      chartArea
-        .selectAll(`.bar-${student.name.replace(/\s+/g, '-')}`)
-        .data(student.sessions)
-        .join('rect')
-        .attr("class", `bar-${student.name.replace(/\s+/g, "-")}`)
-        .attr("x", d => x(d.start))
-        .attr("y", y(student.name)!+ (y.bandwidth() / 4)+ (barheight/2)) // centralizar verticalmente
-        .attr('height', barheight)
-        .attr('width', d => x(d.end) - x(d.start))
-        .attr('fill', barColor);
-
+      // Atualiza barras de sessão (Data Join aninhado)
+      studentRow.select<SVGGElement>(".session-bars-container")
+        .selectAll("rect")
+        .data(d.sessions)
+        .join("rect")
+        .attr("x", s => x(s.start))
+        .attr("y", y.bandwidth() / 2 - barHeight / 2)
+        .attr("width", s => x(s.end) - x(s.start))
+        .attr("height", barHeight)
+        .attr("fill", barColor);
     });
   }
 
-  // Cria uma DIV para o input + label
-  const controls = container
-    .append("div")
-    .attr("class", "mt-4 flex justify-center items-center gap-2");
+  /**
+   * Lida com a lógica de ordenação e dispara a transição.
+   */
+  function updateScalesAndRedraw() {
+    // 1. Atualiza o domínio da escala Y com a nova ordem dos estudantes
+    y.domain(data.students.map(d => d.name));
 
-  controls
-    .append("label")
-    .attr("for", "delay-input")
-    .text("Atraso (min):");
+    // Define a transição para ser usada em todos os elementos
+    const t = svg.transition().duration(750);
 
-  const delayInput = controls
-    .append("input")
+    // 2. ✨ RE-VINCULA OS DADOS À SELEÇÃO (PASSO CRUCIAL) ✨
+    // Esta linha informa ao D3 sobre a nova ordem dos dados.
+    // A função de chave (d => d.name) é essencial para garantir que o D3
+    // mantenha o mesmo elemento DOM para cada estudante, apenas reordenando a seleção.
+    const studentRows = chartArea.selectAll<SVGGElement, StudentData>(".student-row")
+      .data(data.students, d => d.name);
+
+    // 3. Transiciona cada grupo `.student-row` para sua nova posição vertical
+    studentRows.transition(t)
+      .attr("transform", d => `translate(0, ${y(d.name)!})`);
+
+    // 4. ATUALIZA A COR DO FUNDO (ZEBRA) DURANTE A TRANSIÇÃO
+    // Como os dados foram re-vinculados no passo 2, o índice 'i' aqui
+    // agora corresponde à nova posição do estudante, corrigindo o padrão de cores.
+    studentRows.select<SVGRectElement>(".row-bg")
+      .transition(t)
+      .attr("fill", (_, i) => {
+        // Agora o 'i' está correto!
+        return i % 2 === 0 ? '#FFFFFF' : '#F8F8F8';
+      });
+  }
+  
+  /**
+   * Centraliza a lógica de clique nos cabeçalhos para ordenação
+   */
+  function handleSort(column: "name" | "stats"){
+      if (sortBy.column === column) {
+        sortBy.order = sortBy.order === "asc" ? "desc" : "asc";
+      } else {
+        sortBy.column = column;
+        sortBy.order = "asc";
+      }
+      
+      const sortOrder = sortBy.order === "asc" ? d3.ascending : d3.descending;
+
+      data.students.sort((a, b) => {
+          if (column === 'name') {
+              return sortOrder(a.name, b.name);
+          } else { // stats
+              const totalA = d3.sum(a.sessions, s => getMinutesWithinEvent(s, data.event.start, data.event.end));
+              const totalB = d3.sum(b.sessions, s => getMinutesWithinEvent(s, data.event.start, data.event.end));
+              return sortOrder(totalA, totalB);
+          }
+      });
+
+      updateScalesAndRedraw();
+  }
+
+
+  // =================================================================
+  // ✨ FIM DA REATORAÇÃO PRINCIPAL ✨
+  // =================================================================
+
+  // Controles (Input de Atraso)
+  const controls = container.append("div").attr("class", "mt-4 flex justify-center items-center gap-2");
+  controls.append("label").attr("for", "delay-input").text("Atraso (min):");
+  const delayInput = controls.append("input")
     .attr("id", "delay-input")
     .attr("type", "number")
     .attr("value", delayThreshold)
@@ -437,35 +405,12 @@ export function drawEventTimeline(
     .attr("step", 1)
     .attr("class", "border rounded px-2 py-1 w-20 text-center");
 
-  updateBars();
-  
-  delayInput.on("input", function(){
+  delayInput.on("input", function() {
     delayThreshold = parseInt((this as HTMLInputElement).value, 10) || 0;
-    updateBars();
+    // Chama a função mais leve, pois apenas cores e texto mudam.
+    updateColorsAndStats(chartArea.selectAll(".student-row"));
   });
 
-  //Sempre que ordenar, atualiza a escala y e aplica a transição aos elementos
-  function updateScalesAndRedraw() {
-    // Atualiza domínio da escala Y
-    y.domain(data.students.map(d => d.name));
-
-    // Transição suave
-    const t = svg.transition().duration(750);
-
-    // Atualiza labels
-    labelGroup.selectAll(".student-label")
-      .transition(t)
-      .attr("transform", d => `translate(0, ${y(d.name)!+margin.top})`);
-
-    // Atualiza col de stats
-    statsGroup.selectAll(".student-stats")
-      .transition(t)
-      .attr("transform", d => `translate(${statsX}, ${y(d.name)!+margin.top})`);
-
-    // Atualiza barras
-    chartArea.selectAll("rect")
-      .transition(t)
-      .attr("y", d => y((d as any).studentName)! + (y.bandwidth() / 4));
+  // Desenho inicial
+  redraw();
 }
-}
-
