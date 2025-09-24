@@ -59,6 +59,7 @@ drawEventTimeline('#timeline-chart', data, {
 ```
 
 ---
+
 ## Estrutra de Dados
 
 A função principal espera um objeto com uma estrutura específica (TimelineData):
@@ -148,6 +149,16 @@ event: {
     },
   ]
 ```
+#### API de Opções
+
+Você pode customizar a visualização através de um objeto de opções passado como terceiro argumento para a função drawEventTimeline.
+
+```
+Parâmetro	Tipo	Padrão	Descrição
+initialDelay	number	15	Define o valor inicial (em minutos) para o campo de input de "Atraso".
+width	number	100%	Define uma largura fixa para o container do gráfico. Por padrão, ocupa 100%.
+height	number	auto	Define uma altura fixa. Por padrão, a altura é calculada com base nos dados.
+```
 
 ### Dados InteractionChart
 
@@ -155,3 +166,36 @@ event: {
 
 ### Dados PerformanceChart
 
+----
+
+## Desenvolvimento
+
+Se você deseja contribuir ou rodar este projeto localmente, siga os passos abaixo.
+
+### 1. Clone o repositório:
+```shell
+git clone https://github.com/wansel/dataviz-ppgi.git
+cd dataviz-ppgi.git
+```
+
+### 2. Instale as dependências:
+```shell
+npm install
+```
+
+### 3. Rode o ambiente de desenvolvimento
+
+A biblioteca utiliza o Vite para um desenvolvimento rápido. A pasta `/dev` contém um ambiente de teste para visualizar a biblioteca em ação.
+
+```Bash
+npm run dev
+```
+> Isso iniciará um servidor local, geralmente em http://localhost:5173.
+
+### 4. Build da biblioteca:
+```shell
+npm run build
+```
+
+# Licença
+Este projeto está licenciado sob a Licença MIT. Veja o arquivo **LICENSE** para mais detalhes.
