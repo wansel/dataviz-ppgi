@@ -1,57 +1,58 @@
 # Nome do Workflow
-name: Deploy to GitHub Pages
+name: Deploy Demo to GitHub Pages
 
-# Gatilho: Este workflow roda a cada push na branch 'main'
+# Gatilho: Roda a cada push na branch 'main'
 on:
   push:
     branches: ["main"]
-  # Permite que você rode este workflow manualmente pela aba Actions
   workflow_dispatch:
 
-# Permissões para o GITHUB_TOKEN para permitir o deploy
+# Permissões necessárias para o deploy
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Define o que acontece quando o workflow roda
+# Definição do job
 jobs:
-  # O nome do job é 'deploy'
-  deploy:
-    runs-on: ubuntu-latest # Rodará em uma máquina virtual Ubuntu
+  deploy-demo:
+    runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      # 1. Pega o código do seu repositório
+      # 1. Pega o código do repositório (sem alterações)
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. Configura o ambiente Node.js
+      # 2. Configura o Node.js (sem alterações)
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 23 # Use a versão do Node que seu projeto utiliza
+          node-version: 18
 
-      # 3. Instala as dependências do projeto
+      # 3. Instala as dependências (sem alterações)
       - name: Install dependencies
         run: npm install
 
-      # 4. Roda o script de build
-      - name: Build
-        run: npm run build # Este é o comando que definimos no package.json!
-
-      # 5. Prepara os arquivos da pasta 'dist' para o deploy
+      # 4. RODA O BUILD DA DEMO DIRETAMENTE PELA LINHA DE COMANDO
+      - name: Build Demo Pages
+        run: >
+          npx vite build dev 
+          --outDir dist-demo 
+          --base=/${{ github.event.repository.name }}/
+        
+      # 5. Prepara os artefatos para o upload (sem alterações)
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      # 6. Faz o upload dos artefatos (o conteúdo da pasta 'dist')
+      # 6. Faz o upload do conteúdo da pasta de saída definida acima
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './dist' # Aponta para a pasta que o 'npm run build' gerou
+          path: './dist-demo' # Aponta para o diretório de saída que especificamos
 
-      # 7. Faz o deploy final para o GitHub Pages
+      # 7. Faz o deploy para o GitHub Pages (sem alterações)
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
