@@ -1,0 +1,57 @@
+# Nome do Workflow
+name: Deploy to GitHub Pages
+
+# Gatilho: Este workflow roda a cada push na branch 'main'
+on:
+  push:
+    branches: ["main"]
+  # Permite que você rode este workflow manualmente pela aba Actions
+  workflow_dispatch:
+
+# Permissões para o GITHUB_TOKEN para permitir o deploy
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Define o que acontece quando o workflow roda
+jobs:
+  # O nome do job é 'deploy'
+  deploy:
+    runs-on: ubuntu-latest # Rodará em uma máquina virtual Ubuntu
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      # 1. Pega o código do seu repositório
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. Configura o ambiente Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 23 # Use a versão do Node que seu projeto utiliza
+
+      # 3. Instala as dependências do projeto
+      - name: Install dependencies
+        run: npm install
+
+      # 4. Roda o script de build
+      - name: Build
+        run: npm run build # Este é o comando que definimos no package.json!
+
+      # 5. Prepara os arquivos da pasta 'dist' para o deploy
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      # 6. Faz o upload dos artefatos (o conteúdo da pasta 'dist')
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist' # Aponta para a pasta que o 'npm run build' gerou
+
+      # 7. Faz o deploy final para o GitHub Pages
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
