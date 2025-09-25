@@ -82,8 +82,10 @@ export function drawInteractionChart(
 
   // Escala de TEMPO (aninhada) para posicionar as barras DENTRO de cada dia
   const timeScale = d3.scaleTime()
-    .domain([d3.timeDay.start(data.startDate), d3.timeDay.end(data.startDate)])
-    .range([0, x.bandwidth()]);
+  // d3.timeDay(date) -> obtém o início do dia (00:00:00)
+  // d3.timeDay.offset(date, 1) -> obtém o início do PRÓXIMO dia (efetivamente o fim do dia atual)
+  .domain([d3.timeDay(data.startDate), d3.timeDay.offset(data.startDate, 1)])
+  .range([0, x.bandwidth()]);
 
   // Escala de CORES para o modo detalhado
   const colorScale = d3.scaleOrdinal<InteractionType, string>()
@@ -97,12 +99,13 @@ export function drawInteractionChart(
 
   // --- Eixos (Axes) ---
   const xAxis = (g: any) => g
-    .attr('transform', `translate(0, ${height})`)
-    .call(d3.axisBottom(x)
-      .tickValues(days)
-      .tickFormat(d => d3.timeFormat("%a")(new Date(d)).charAt(0)) // D, S, T, Q...
-    )
-    .select('.domain').remove();
+  .attr('transform', `translate(0, ${height})`)
+  .call(d3.axisBottom(x)
+    // Converta os valores dos ticks para o mesmo formato do domínio (ISO string)
+    .tickValues(days.map(d => d.toISOString()))
+    .tickFormat(d => d3.timeFormat("%a")(new Date(d)).charAt(0))
+  )
+  .select('.domain').remove();
 
   svg.append('g').call(xAxis);
 
@@ -156,17 +159,34 @@ export function drawInteractionChart(
     .attr("height", y.bandwidth())
     .attr("fill", "transparent");
 
+
+  // Helper para projetar a HORA de qualquer data no dia base da escala
+  const projectTime = (date: Date): Date => {
+    const scaleBaseDate = d3.timeDay(data.startDate); // O dia que a timeScale entende
+    const projectedDate = new Date(scaleBaseDate);
+    projectedDate.setHours(
+      date.getHours(),
+      date.getMinutes(),
+      date.getSeconds(),
+      date.getMilliseconds()
+    );
+    return projectedDate;
+  };
+
+  
   // Desenha as BARRAS de sessão DENTRO de cada grupo de dia
   const sessionBars = dayGroups.selectAll(".session-bar")
     .data(d => d.sessions)
     .join("rect")
     .attr("class", "session-bar")
-    .attr("x", d => timeScale(d.start))
+    // Usa a função helper para obter a posição X correta
+    .attr("x", d => timeScale(projectTime(d.start)))
     .attr("y", y.bandwidth() * 0.25)
-    .attr("width", d => timeScale(d.end) - timeScale(d.start))
+    // E também para calcular a largura correta
+    .attr("width", d => timeScale(projectTime(d.end)) - timeScale(projectTime(d.start)))
     .attr("height", y.bandwidth() * 0.5)
-    .attr("rx", 2) // Bordas arredondadas
-    .attr("fill", "#3182ce"); // Cor padrão (azul)
+    .attr("rx", 2)
+    .attr("fill", "#3182ce");
 
   // --- Interatividade ---
 
