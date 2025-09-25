@@ -1,15 +1,18 @@
 import * as d3 from 'd3';
 
-// =================================================================
-// 1. INTERFACES E PARSER (permanecem os mesmos)
-// =================================================================
+type InteractionTypeKey = 'video' | 'quiz' | 'reading' | 'live' | string;
 
-type InteractionType = 'video' | 'quiz' | 'reading' | 'live';
+interface InteractionTypeMetadata {
+  name: string;
+  legend: string;
+  iconUrl: string;
+  color: string;
+}
 
 interface Session {
   start: Date;
   end: Date;
-  type: InteractionType;
+   type: InteractionTypeKey;
 }
 
 interface DailyData {
@@ -47,25 +50,26 @@ export function parseInteractionData(jsonData: any): InteractionsData {
   return jsonData;
 }
 
-
-// =================================================================
-// 2. NOVA FUNÇÃO DA VISUALIZAÇÃO
-// =================================================================
-
 export function drawInteractionChart(
   selector: string,
   data: InteractionsData
 ) {
   // --- Configurações Iniciais ---
-  const margin = { top: 20, right: 30, bottom: 20, left: 250 };
+  const margin = { top: 20, right: 30, bottom: 20, left: 350 };
   const width = 1100 - margin.left - margin.right;
   const height = (data.students.length * 80);
   const daySpacing = 3; // Espaço em pixels entre os retângulos dos dias
+  let detailedView = false; // Estado para a visão detalhada
 
   const dayFormatter = new Intl.DateTimeFormat('pt-BR', { weekday: 'short' });
 
   const container = d3.select(selector);
   container.html("");
+
+  // --- Tooltip ---
+  const tooltip = container.append("div")
+    .attr("class", "timeline-tooltip absolute opacity-0 pointer-events-none p-3 bg-gray-800 text-white rounded-lg shadow-xl z-10")
+    .style("transition", "opacity 0.2s");
 
   const svg = container
     .append('svg')
@@ -134,17 +138,45 @@ export function drawInteractionChart(
     .join("g")
     .attr("class", "day-group");
 
-  // Adiciona o retângulo para cada dia
-  dayGroups.append("rect")
+  // A. Visão Simples (uma barra por dia)
+  const simpleView = dayGroups.append("g").attr("class", "simple-view");
+  simpleView.append("rect")
     .attr("height", 25)
-    .attr("width", d => {
-      return d.dailyTotalMinutes > 0 ? timeScaleWidth(d.dailyTotalMinutes) : 10;
-    })
+    .attr("width", d => d.dailyTotalMinutes > 0 ? timeScaleWidth(d.dailyTotalMinutes) : 10)
     .attr("rx", 3)   // borda arredondada horizontal
     .attr("ry", 3)   // borda arredondada vertical
-    .attr("fill", d => d.dailyTotalMinutes > 0 ? "#3182ce" : "#8c8c8cff"); // Azul ou Cinza
+    .attr("fill", d => d.dailyTotalMinutes > 0 ? "#3182ce" : "#8c8c8cff");
 
-  // Adiciona o texto (inicial do dia da semana) para cada dia
+  // B. Visão Detalhada (segmentos por sessão)
+  const detailedViewG = dayGroups.append("g")
+    .attr("class", "detailed-view")
+    .style("opacity", 0) // Começa invisível
+    .attr("rx", 3)   // borda arredondada horizontal
+    .attr("ry", 3)   // borda arredondada vertical
+    .style("pointer-events", "none"); // Não interfere com o mouse
+
+  detailedViewG.each(function(dayData) {
+    if (dayData.dailyTotalMinutes === 0) return; // Não desenha nada se não houver sessões
+
+    const g = d3.select(this);
+    let sessionXOffset = 0;
+
+    dayData.sessions.forEach(session => {
+      const sessionDuration = (session.end.getTime() - session.start.getTime()) / 60000;
+      const sessionWidth = timeScaleWidth(sessionDuration);
+      
+      g.append("rect")
+        .attr("x", sessionXOffset)
+        .attr("height", 25)
+        .attr("width", sessionWidth)
+        .attr("fill", data.interactionTypes[session.type]?.color || '#ccc');
+      
+      sessionXOffset += sessionWidth;
+    });
+  });
+
+
+  // Adiciona o texto (inicial do dia da semana) para cada dia (comum em ambas as visões)
   dayGroups.append("text")
     .attr("y", 25 + 15) // Posiciona abaixo do retângulo
     .attr("text-anchor", "middle")
@@ -170,4 +202,65 @@ export function drawInteractionChart(
           return transform;
       });
   });
+
+  // --- Interatividade (Tooltip) ---
+  dayGroups
+    .on("mouseover", function(event, d) {
+      if (d.sessions.length === 0) return;
+      
+      const summary = d3.rollup(d.sessions, 
+          v => d3.sum(v, s => (s.end.getTime() - s.start.getTime()) / 60000),
+          s => s.type
+      );
+      
+      let tooltipHtml = `<div class="font-bold mb-2 border-b border-gray-600 pb-1">${d3.timeFormat("%A, %d/%m")(d.date)}</div>`;
+      summary.forEach((minutes, typeKey) => {
+          const typeMeta = data.interactionTypes[typeKey];
+          if (!typeMeta) return;
+
+          tooltipHtml += `
+            <div class="flex items-start my-2">
+              <img src="${typeMeta.iconUrl}" class="w-5 h-5 mr-3 mt-1" alt="${typeMeta.name}" />
+              <div>
+                <div class="font-semibold">${typeMeta.name} (${Math.round(minutes)} min)</div>
+                <div class="text-xs text-gray-300">${typeMeta.legend}</div>
+              </div>
+            </div>`;
+      });
+
+      tooltip.html(tooltipHtml).style("opacity", 1);
+    })
+    .on("mousemove", event => tooltip.style("left", (event.pageX + 15) + "px").style("top", (event.pageY + 15) + "px"))
+    .on("mouseout", () => tooltip.style("opacity", 0));
+
+  // --- Controle de Visão Detalhada ---
+  function toggleDetails() {
+    detailedView = !detailedView;
+    
+    // Transição suave entre as visões
+    d3.selectAll(".simple-view")
+      .transition().duration(300)
+      .style("opacity", detailedView ? 0 : 1)
+      .style("pointer-events", detailedView ? "none" : "auto");
+
+    d3.selectAll(".detailed-view")
+      .transition().duration(300)
+      .style("opacity", detailedView ? 1 : 0)
+      .style("pointer-events", detailedView ? "auto" : "none");
+  }
+
+  // Adiciona o botão de toggle
+  container.append("div")
+    .attr("class", "mt-4 flex items-center justify-center")
+    .html(`
+      <label class="flex items-center cursor-pointer">
+        <span class="mr-3 text-sm font-medium text-gray-900">Interações detalhadas</span>
+        <div class="relative">
+          <input type="checkbox" id="detailsToggle" class="sr-only peer">
+          <div class="w-11 h-6 bg-gray-400 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+        </div>
+      </label>
+    `)
+    .select("#detailsToggle")
+    .on("change", toggleDetails);
 }

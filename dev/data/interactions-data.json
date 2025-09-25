@@ -1,6 +1,32 @@
 {
   "startDate": "2025-09-07",
   "endDate": "2025-09-13",
+  "interactionTypes": {
+    "video": {
+      "name": "Vídeos",
+      "legend": "Assistindo conteúdo disponibilizado na plataforma.",
+      "iconUrl": "/icons/video.svg",
+      "color": "#6A5ACD"
+    },
+    "quiz": {
+      "name": "Questões",
+      "legend": "Respondendo a questões na plataforma.",
+      "iconUrl": "/icons/quiz.svg",
+      "color": "#3CB371"
+    },
+    "reading": {
+      "name": "Leitura",
+      "legend": "Lendo conteúdo disponibilizado na plataforma.",
+      "iconUrl": "/icons/reading.svg",
+      "color": "#FFA500"
+    },
+    "live": {
+      "name": "Síncrono",
+      "legend": "Aulas, atividades em grupo, etc.",
+      "iconUrl": "/icons/live.svg",
+      "color": "#DC143C"
+    }
+  },
   "students": [
     {
       "id": "student-01",
