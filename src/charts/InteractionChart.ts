@@ -62,6 +62,7 @@ export function drawInteractionChart(
   let detailedView = false; // Estado para a visão detalhada
 
   const dayFormatter = new Intl.DateTimeFormat('pt-BR', { weekday: 'short' });
+  const tooltipWeekdayFormatter = new Intl.DateTimeFormat('pt-BR', { weekday: 'long' });
 
   const container = d3.select(selector);
   container.html("");
@@ -151,28 +152,37 @@ export function drawInteractionChart(
   const detailedViewG = dayGroups.append("g")
     .attr("class", "detailed-view")
     .style("opacity", 0) // Começa invisível
-    .attr("rx", 3)   // borda arredondada horizontal
-    .attr("ry", 3)   // borda arredondada vertical
     .style("pointer-events", "none"); // Não interfere com o mouse
 
   detailedViewG.each(function(dayData) {
-    if (dayData.dailyTotalMinutes === 0) return; // Não desenha nada se não houver sessões
-
     const g = d3.select(this);
-    let sessionXOffset = 0;
 
-    dayData.sessions.forEach(session => {
-      const sessionDuration = (session.end.getTime() - session.start.getTime()) / 60000;
-      const sessionWidth = timeScaleWidth(sessionDuration);
-      
+    // SE HÁ SESSÕES, desenha os segmentos coloridos um a um
+    if (dayData.dailyTotalMinutes > 0) {
+      let sessionXOffset = 0;
+      dayData.sessions.forEach(session => {
+        const sessionDuration = (session.end.getTime() - session.start.getTime()) / 60000;
+        // Evita desenhar barras com largura zero ou negativa
+        if (sessionDuration <= 0) return; 
+
+        const sessionWidth = timeScaleWidth(sessionDuration);
+        
+        g.append("rect")
+          .attr("x", sessionXOffset)
+          .attr("height", 25)
+          .attr("width", sessionWidth)
+          .attr("fill", data.interactionTypes[session.type]?.color || '#ccc');
+        
+        sessionXOffset += sessionWidth;
+      });
+    } 
+    // ✨ SENÃO (se não há sessões), desenha o retângulo cinza de placeholder ✨
+    else {
       g.append("rect")
-        .attr("x", sessionXOffset)
         .attr("height", 25)
-        .attr("width", sessionWidth)
-        .attr("fill", data.interactionTypes[session.type]?.color || '#ccc');
-      
-      sessionXOffset += sessionWidth;
-    });
+        .attr("width", 10) // Largura fixa para dias inativos
+        .attr("fill", "#8c8c8cff"); // Cor cinza
+    }
   });
 
 
@@ -213,14 +223,22 @@ export function drawInteractionChart(
           s => s.type
       );
       
-      let tooltipHtml = `<div class="font-bold mb-2 border-b border-gray-600 pb-1">${d3.timeFormat("%A, %d/%m")(d.date)}</div>`;
+      // Formata o dia da semana completo em português (ex: "segunda-feira")
+      const weekday = tooltipWeekdayFormatter.format(d.date);
+      // Deixa a primeira letra maiúscula para um melhor estilo
+      const capitalizedWeekday = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+      // Usa d3.timeFormat apenas para a parte numérica (dia/mês), que não precisa de tradução
+      const dayMonth = d3.timeFormat("%d/%m")(d.date);
+
+      let tooltipHtml = `<div class="font-bold mb-2 border-b border-gray-600 pb-1">${capitalizedWeekday}, ${dayMonth}</div>`;
+      
       summary.forEach((minutes, typeKey) => {
           const typeMeta = data.interactionTypes[typeKey];
           if (!typeMeta) return;
 
           tooltipHtml += `
             <div class="flex items-start my-2">
-              <img src="${typeMeta.iconUrl}" class="w-5 h-5 mr-3 mt-1" alt="${typeMeta.name}" />
+              <img src="${typeMeta.iconUrl}" class="w-8 h-8 mr-3 mt-1" alt="${typeMeta.name}" />
               <div>
                 <div class="font-semibold">${typeMeta.name} (${Math.round(minutes)} min)</div>
                 <div class="text-xs text-gray-300">${typeMeta.legend}</div>

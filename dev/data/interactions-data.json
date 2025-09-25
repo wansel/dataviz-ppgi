@@ -5,25 +5,25 @@
     "video": {
       "name": "Vídeos",
       "legend": "Assistindo conteúdo disponibilizado na plataforma.",
-      "iconUrl": "/icons/video.svg",
+      "iconUrl": "/img/icon-video.png",
       "color": "#6A5ACD"
     },
     "quiz": {
       "name": "Questões",
       "legend": "Respondendo a questões na plataforma.",
-      "iconUrl": "/icons/quiz.svg",
+      "iconUrl": "/img/icon-question.png",
       "color": "#3CB371"
     },
     "reading": {
       "name": "Leitura",
       "legend": "Lendo conteúdo disponibilizado na plataforma.",
-      "iconUrl": "/icons/reading.svg",
+      "iconUrl": "/img/icon-reading.png",
       "color": "#FFA500"
     },
     "live": {
       "name": "Síncrono",
       "legend": "Aulas, atividades em grupo, etc.",
-      "iconUrl": "/icons/live.svg",
+      "iconUrl": "/img/icon-live.png",
       "color": "#DC143C"
     }
   },
