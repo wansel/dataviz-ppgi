@@ -1,9 +1,0 @@
-import * as d3 from 'd3';
-
-export function drawInteractionChart(
-  selector: string,
-  data: InteractionChartData,
-  options: Options = {}
-){
-
-}
