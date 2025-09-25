@@ -45,6 +45,110 @@
           ]
         }
       ]
+    },
+    {
+      "id": "student-03",
+      "name": "Bruna Fernandes de Oliveira",
+      "avatarUrl": "https://i.pravatar.cc/150?u=bruna",
+      "totalTimeMinutes": 240,
+      "dailyData": [
+        {
+          "date": "2025-09-08",
+          "sessions": [
+            { "start": "2025-09-08T08:30:00", "end": "2025-09-08T09:15:00", "type": "reading" },
+            { "start": "2025-09-08T09:30:00", "end": "2025-09-08T10:30:00", "type": "video" }
+          ]
+        },
+        {
+          "date": "2025-09-10",
+          "sessions": [
+            { "start": "2025-09-10T15:00:00", "end": "2025-09-10T16:00:00", "type": "quiz" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "student-04",
+      "name": "Diego Matheus Barbosa",
+      "avatarUrl": "https://i.pravatar.cc/150?u=diego",
+      "totalTimeMinutes": 150,
+      "dailyData": [
+        {
+          "date": "2025-09-07",
+          "sessions": [
+            { "start": "2025-09-07T18:00:00", "end": "2025-09-07T18:45:00", "type": "video" }
+          ]
+        },
+        {
+          "date": "2025-09-12",
+          "sessions": [
+            { "start": "2025-09-12T20:00:00", "end": "2025-09-12T21:30:00", "type": "live" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "student-05",
+      "name": "Elaine Rocha Martins",
+      "avatarUrl": "https://i.pravatar.cc/150?u=elaine",
+      "totalTimeMinutes": 200,
+      "dailyData": [
+        {
+          "date": "2025-09-09",
+          "sessions": [
+            { "start": "2025-09-09T08:00:00", "end": "2025-09-09T08:45:00", "type": "reading" },
+            { "start": "2025-09-09T09:00:00", "end": "2025-09-09T10:00:00", "type": "video" }
+          ]
+        },
+        {
+          "date": "2025-09-13",
+          "sessions": [
+            { "start": "2025-09-13T17:00:00", "end": "2025-09-13T18:15:00", "type": "quiz" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "student-06",
+      "name": "Fábio Henrique Nogueira",
+      "avatarUrl": "https://i.pravatar.cc/150?u=fabio",
+      "totalTimeMinutes": 270,
+      "dailyData": [
+        {
+          "date": "2025-09-08",
+          "sessions": [
+            { "start": "2025-09-08T19:00:00", "end": "2025-09-08T20:30:00", "type": "live" }
+          ]
+        },
+        {
+          "date": "2025-09-11",
+          "sessions": [
+            { "start": "2025-09-11T08:00:00", "end": "2025-09-11T09:15:00", "type": "video" },
+            { "start": "2025-09-11T09:30:00", "end": "2025-09-11T10:15:00", "type": "quiz" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "student-07",
+      "name": "Gabriela Moura Santos",
+      "avatarUrl": "https://i.pravatar.cc/150?u=gabriela",
+      "totalTimeMinutes": 210,
+      "dailyData": [
+        {
+          "date": "2025-09-07",
+          "sessions": [
+            { "start": "2025-09-07T14:00:00", "end": "2025-09-07T15:30:00", "type": "reading" }
+          ]
+        },
+        {
+          "date": "2025-09-12",
+          "sessions": [
+            { "start": "2025-09-12T09:00:00", "end": "2025-09-12T10:15:00", "type": "video" },
+            { "start": "2025-09-12T10:30:00", "end": "2025-09-12T11:00:00", "type": "quiz" }
+          ]
+        }
+      ]
     }
   ]
 }
