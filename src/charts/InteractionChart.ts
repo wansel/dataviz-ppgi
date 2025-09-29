@@ -12,7 +12,7 @@ interface InteractionTypeMetadata {
 interface Session {
   start: Date;
   end: Date;
-   type: InteractionTypeKey;
+  type: InteractionTypeKey;
 }
 
 interface DailyData {
@@ -31,6 +31,7 @@ interface Student {
 interface InteractionsData {
   startDate: Date;
   endDate: Date;
+  interactionTypes: Record<InteractionTypeKey, InteractionTypeMetadata>;
   students: Student[];
 }
 

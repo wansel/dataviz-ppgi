@@ -31,7 +31,7 @@
     {
       "id": "student-01",
       "name": "Alice Silvana da Cruz",
-      "avatarUrl": "https://i.pravatar.cc/150?u=alice",
+      "avatarUrl": "/img/students/f02.png",
       "totalTimeMinutes": 180,
       "dailyData": [
         {
@@ -52,7 +52,7 @@
     },
     {
       "id": "student-02",
-      "name": "Carlos Eduardo Assis de Teixeira",
+      "name": "Carla Assis de Teixeira",
       "avatarUrl": "https://i.pravatar.cc/150?u=carlos",
       "totalTimeMinutes": 300,
       "dailyData": [
@@ -74,7 +74,7 @@
     },
     {
       "id": "student-03",
-      "name": "Bruna Fernandes de Oliveira",
+      "name": "Diego Matheus Barbosa",
       "avatarUrl": "https://i.pravatar.cc/150?u=bruna",
       "totalTimeMinutes": 240,
       "dailyData": [
@@ -95,7 +95,7 @@
     },
     {
       "id": "student-04",
-      "name": "Diego Matheus Barbosa",
+      "name": "Bruna Fernandes de Oliveira",
       "avatarUrl": "https://i.pravatar.cc/150?u=diego",
       "totalTimeMinutes": 150,
       "dailyData": [
@@ -115,7 +115,7 @@
     },
     {
       "id": "student-05",
-      "name": "Elaine Rocha Martins",
+      "name": "Fábio Henrique Nogueira",
       "avatarUrl": "https://i.pravatar.cc/150?u=elaine",
       "totalTimeMinutes": 200,
       "dailyData": [
@@ -136,7 +136,7 @@
     },
     {
       "id": "student-06",
-      "name": "Fábio Henrique Nogueira",
+      "name": "Elaine Rocha Martins",
       "avatarUrl": "https://i.pravatar.cc/150?u=fabio",
       "totalTimeMinutes": 270,
       "dailyData": [
