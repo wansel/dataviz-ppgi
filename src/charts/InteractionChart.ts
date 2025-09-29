@@ -176,7 +176,7 @@ export function drawInteractionChart(
         sessionXOffset += sessionWidth;
       });
     } 
-    // ✨ SENÃO (se não há sessões), desenha o retângulo cinza de placeholder ✨
+    // SENÃO (se não há sessões), desenha o retângulo cinza de placeholder ✨
     else {
       g.append("rect")
         .attr("height", 25)
@@ -281,4 +281,37 @@ export function drawInteractionChart(
     `)
     .select("#detailsToggle")
     .on("change", toggleDetails);
+
+
+  // --- Legenda ao final da visualização ---
+  // 1. Cria o container principal da legenda com classes de Grid
+  const legendContainer = container.append("div")
+    .attr("class", "legend-container mt-8 pt-4 border-t border-gray-200 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-4");
+  
+    // 2. Converte o objeto de tipos de interação em um array para o D3
+  const legendData = Object.values(data.interactionTypes);
+
+  // 3. Usa o padrão de data join do D3 para criar um item para cada tipo
+  const legendItems = legendContainer.selectAll(".legend-item")
+    .data(legendData)
+    .join("div")
+    .attr("class", "legend-item flex items-start p-2 rounded-md");
+
+  // 4. Adiciona o ícone e a cor a cada item
+  legendItems.append("div")
+    .attr("class", "flex-shrink-0 mr-4 mt-1")
+    .html(d => `
+      <div class="relative w-8 h-8">
+        <div class="absolute inset-0 rounded-full"></div>
+        <img src="${d.iconUrl}" class="relative w-8 h-8" alt="${d.name}" />
+      </div>
+    `);
+
+  // 5. Adiciona o bloco de texto (nome e descrição) a cada item
+  legendItems.append("div")
+    .html(d => `
+      <p class="font-bold" style="color: ${d.color};">${d.name}</p>
+      <p class="text-sm text-gray-600">${d.legend}</p>
+    `);
+
 }
