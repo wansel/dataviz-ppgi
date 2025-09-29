@@ -80,6 +80,35 @@ export function drawInteractionChart(
     .append('g')
     .attr('transform', `translate(${margin.left},${margin.top})`);
 
+  // --- Cabeçalhos das colunas(AGRUPADOS) ---
+  const headerGroup = svg.append("g")
+    .attr("class", "chart-headers")
+    .attr("transform", "translate(0, -10)"); // Posição vertical para todos os cabeçalhos
+
+  const headerTextStyle = "text-sm font-semibold text-gray-700";
+
+  // Cabeçalho: Estudantes
+  headerGroup.append("text")
+    .attr("x", -margin.left + 20) // Alinha com o início da coluna (avatar)
+    .attr("text-anchor", "start") // Alinha o texto à esquerda
+    .attr("class", headerTextStyle)
+    .text("Estudantes");
+
+  // Cabeçalho: Tempo total
+  headerGroup.append("text")
+    .attr("x", -50)
+    .attr("text-anchor", "middle") // Centraliza o texto
+    .attr("class", headerTextStyle)
+    .text("Tempo total");
+
+  // Cabeçalho: Acessos e Interações
+  headerGroup.append("text")
+    .attr("x", 0) // Alinha com o início das barras da timeline
+    .attr("text-anchor", "start") // Alinha o texto à esquerda
+    .attr("class", headerTextStyle)
+    .text("Acessos e Interações");
+
+
   // --- 1. Pré-processamento de Dados ---
   const days = d3.timeDay.range(data.startDate, d3.timeDay.offset(data.endDate, 1));
   
@@ -103,7 +132,8 @@ export function drawInteractionChart(
   const y = d3.scaleBand()
     .domain(processedStudents.map(s => s.id))
     .range([0, height])
-    .padding(0.4);
+    // .padding(0.4)
+    .padding(0);
 
   // Escala X para converter MINUTOS em LARGURA (pixels)
   const maxTotalTime = d3.max(processedStudents, s => s.grandTotalMinutes) || 0;
@@ -111,17 +141,44 @@ export function drawInteractionChart(
     .domain([0, maxTotalTime + 120]) // + 2 horas de margem
     .range([0, width]); // O tempo máximo preenche a largura total
 
+  // FUNÇÃO AUXILIAR PARA FORMATAR O TEMPO
+  function formatTotalTime(totalMinutes: number): string {
+    if (isNaN(totalMinutes) || totalMinutes < 0) {
+      return "0h00";
+    }
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = Math.round(totalMinutes % 60);
+    // Adiciona um zero à esquerda se os minutos forem menores que 10
+    const paddedMinutes = String(minutes).padStart(2, '0');
+    return `${hours}h${paddedMinutes}`;
+  }
+
+
   // --- 3. Renderização Principal ---
+  const studentInfoYCenter = y.bandwidth() / 2; // O centro vertical da faixa (40px)
+
   const studentRows = svg.selectAll(".student-row")
     .data(processedStudents, (d: any) => d.id)
     .join("g")
     .attr("class", "student-row")
     .attr("transform", d => `translate(0, ${y(d.id)!})`);
-    
+  
+  // Adiciona faixas (fundo zebrado)
+  studentRows.append("rect")
+    .attr("class", "row-background")
+    .attr("x", -margin.left) // Começa na borda esquerda da margem
+    .attr("y", 0) // Começa no topo da linha do estudante
+    .attr("width", width + margin.left + margin.right) // Ocupa a largura total
+    .attr("height", y.bandwidth()) // Usa a altura da faixa definida pela escala
+    .attr("fill", (d, i) => i % 2 === 0 ? "#F8f8f8" : "#FFFFFF") // Alterna a cor
+    .lower(); // Garante que o retângulo fique atrás de outros elementos
+
+
   // Adiciona informações do estudante (avatar, nome)
   studentRows.append("image")
       .attr("x", -margin.left + 20)
-      .attr("y", 0)
+      // Para centralizar a imagem: (altura_total - altura_imagem) / 2
+      .attr("y", studentInfoYCenter - 25) // ✨ ALTERADO: 40px (centro) - 25px (metade da altura do avatar) = 15px
       .attr("width", 50)
       .attr("height", 50)
       .attr("href", d => d.avatarUrl)
@@ -129,10 +186,21 @@ export function drawInteractionChart(
 
   studentRows.append("text")
       .attr("x", -margin.left + 80)
-      .attr("y", 25)
+      .attr("y", studentInfoYCenter) // ALTERADO: Posiciona no centro exato
+      .attr("dominant-baseline", "middle")
       // .attr("class", "font-semibold align-middle")
       .attr("class", "align-middle")
       .text(d => d.name);
+
+  // Adiciona o texto de tempo total
+  studentRows.append("text")
+    .attr("x", -50) // Posiciona a coluna entre o nome e as barras
+    .attr("y", studentInfoYCenter)
+    .attr("dominant-baseline", "middle")
+    .attr("text-anchor", "middle")
+    .attr("class", "text-gray-800 align-middle")
+    .text(d => formatTotalTime(d.grandTotalMinutes));
+
 
   // Para cada estudante, cria os grupos para cada dia
   const dayGroups = studentRows.selectAll(".day-group")
@@ -214,24 +282,22 @@ export function drawInteractionChart(
       });
   });
 
-  // --- Interatividade (Tooltip) ---
-  dayGroups
-    .on("mouseover", function(event, d) {
-      if (d.sessions.length === 0) return;
-      
+// --- Interatividade (Tooltip) ---
+dayGroups
+  .on("mouseover", function(event, d) {
+    // Formata o cabeçalho com a data (comum a ambos os casos)
+    const weekday = tooltipWeekdayFormatter.format(d.date);
+    const capitalizedWeekday = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+    const dayMonth = d3.timeFormat("%d/%m")(d.date);
+    let tooltipHtml = `<div class="font-bold mb-2 border-b border-gray-600 pb-1">${capitalizedWeekday}, ${dayMonth}</div>`;
+
+    // VERIFICA SE HÁ SESSÕES NO DIA
+    if (d.sessions.length > 0) {
+      // CASO 1: DIA ATIVO - Monta o resumo das atividades (lógica que já tínhamos)
       const summary = d3.rollup(d.sessions, 
           v => d3.sum(v, s => (s.end.getTime() - s.start.getTime()) / 60000),
           s => s.type
       );
-      
-      // Formata o dia da semana completo em português (ex: "segunda-feira")
-      const weekday = tooltipWeekdayFormatter.format(d.date);
-      // Deixa a primeira letra maiúscula para um melhor estilo
-      const capitalizedWeekday = weekday.charAt(0).toUpperCase() + weekday.slice(1);
-      // Usa d3.timeFormat apenas para a parte numérica (dia/mês), que não precisa de tradução
-      const dayMonth = d3.timeFormat("%d/%m")(d.date);
-
-      let tooltipHtml = `<div class="font-bold mb-2 border-b border-gray-600 pb-1">${capitalizedWeekday}, ${dayMonth}</div>`;
       
       summary.forEach((minutes, typeKey) => {
           const typeMeta = data.interactionTypes[typeKey];
@@ -239,7 +305,7 @@ export function drawInteractionChart(
 
           tooltipHtml += `
             <div class="flex items-start my-2">
-              <img src="${typeMeta.iconUrl}" class="w-8 h-8 mr-3 mt-1" alt="${typeMeta.name}" />
+              <img src="${typeMeta.iconUrl}" class="w-7 h-7 mr-3 mt-1" alt="${typeMeta.name}" />
               <div>
                 <div class="font-semibold">${typeMeta.name} (${Math.round(minutes)} min)</div>
                 <div class="text-xs text-gray-300">${typeMeta.legend}</div>
@@ -247,10 +313,19 @@ export function drawInteractionChart(
             </div>`;
       });
 
-      tooltip.html(tooltipHtml).style("opacity", 1);
-    })
-    .on("mousemove", event => tooltip.style("left", (event.pageX + 15) + "px").style("top", (event.pageY + 15) + "px"))
-    .on("mouseout", () => tooltip.style("opacity", 0));
+    } else {
+      // CASO 2: DIA INATIVO - Adiciona a mensagem específica
+      tooltipHtml += `
+        <div class="text-gray-300 italic py-2 px-1">
+          Estudante não se conectou
+        </div>`;
+    }
+
+    // Exibe o tooltip com o HTML gerado
+    tooltip.html(tooltipHtml).style("opacity", 1);
+  })
+  .on("mousemove", event => tooltip.style("left", (event.pageX + 15) + "px").style("top", (event.pageY + 15) + "px"))
+  .on("mouseout", () => tooltip.style("opacity", 0));
 
   // --- Controle de Visão Detalhada ---
   function toggleDetails() {
