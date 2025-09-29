@@ -1,7 +1,7 @@
 export { drawBarChart } from './barChart';
 export { drawLineChart } from './lineChart';
 export { drawWeightsChart } from './weights';
-export { drawEventTimeline } from './EventTimeline';
-export { drawInteractionChart, parseInteractionData } from './InteractionChart';
+export { drawEventTimeline } from './EventTimelineChart';
+export { drawInteractionChart, parseInteractionData } from './AccessInteractionChart';
 export { drawPerformanceChart } from './PerformanceChart';
-export { drawInvestedTime } from './InvestedTime';
+export { drawActivityMonitor } from './ActivityMonitorChart';
