@@ -16,6 +16,13 @@ export default {
     'text-amber-500', // Adicionei esta, caso a use no futuro
     'text-sky-500',   // Adicionei esta, caso a use no futuro
     'text-slate-300',
+
+    // Cores de preenchimento para as linhas (SVG)
+    'fill-slate-50',
+    'fill-white',
+
+    // Classes importantes para o tooltip (HTML)
+    'bg-slate-800',
   ],
   theme: {
     extend: {},
