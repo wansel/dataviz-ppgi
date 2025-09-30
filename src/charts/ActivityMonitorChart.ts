@@ -131,7 +131,7 @@ function _drawStudentRows(selection, { students, scales, config, chartWidth }) {
     .attr("class", (d, i) => (i % 2 === 0 ? "fill-slate-50" : "fill-white"));
 
   studentRows.append("image")
-    .attr("href", d => d.avatar)
+    .attr("href", d => `${config.basePath}${d.avatar}`) 
     .attr("x", -config.margin.left + 20)
     .attr("y", (y.bandwidth() - 40) / 2)
     .attr("width", 40)
@@ -241,7 +241,8 @@ function _drawInteractionCells(studentRows, { flatResources, scales, interaction
 const DEFAULTS = {
   margin: { top: 120, right: 20, bottom: 50, left: 250 },
   rowHeight: 60,
-  columnWidth: 100
+  columnWidth: 100,
+  basePath: '' // Por padrão, não adiciona nenhum prefixo
 };
 
 /**
