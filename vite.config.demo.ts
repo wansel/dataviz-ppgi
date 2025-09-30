@@ -12,9 +12,12 @@ const htmlFiles = globSync('dev/**/*.html').map(file => [
 ]);
 
 export default defineConfig({
-  plugins: [
-    tailwindcss(),
-  ],
+plugins: [
+  tailwindcss({
+    // Informa ao plugin o caminho exato para o ficheiro de configuração
+    config: resolve(process.cwd(), 'tailwind.config.js'),
+  }),
+],
   // Define 'dev' como a raiz do projeto para este build
   root: 'dev',
   build: {
