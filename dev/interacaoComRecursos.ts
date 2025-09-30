@@ -3,6 +3,15 @@ import { drawActivityMonitor } from '../src';
 
 import jsonData from './data/activity-monitor-data.json';
 
+
+// --- LÓGICA DE ORDENAÇÃO ---
+// Ordena o array 'students' dentro do objeto jsonData.
+// A função 'localeCompare' garante a ordenação alfabética correta para nomes em português.
+jsonData.students.sort((alunoA, alunoB) => {
+  return alunoA.name.localeCompare(alunoB.name);
+});
+// -------------------------
+
 // Chama a função de desenho diretamente com os dados do JSON
 drawActivityMonitor('#activity-monitor-chart', jsonData);
 

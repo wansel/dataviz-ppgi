@@ -1,4 +1,86 @@
 {
+  "interactionStates": {
+    "exemplo_com_emoji": {
+      "label": "Não Interagiu",
+      "icon": {
+        "type": "text",
+        "value": "➖",
+        "class": "text-slate-400"
+      }
+    },
+    "exemplo_com_texto": {
+      "label": "Resposta Incorreta",
+      "icon": {
+        "type": "text",
+        "value": "✕",
+        "class": "text-red-500 font-bold"
+      }
+    },
+    "exemplo_svg": {
+      "label": "Aguardando Correção",
+      "icon": {
+        "type": "svg",
+        "value": "<svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='currentColor' class='w-6 h-6 text-blue-500'><path stroke-linecap='round' stroke-linejoin='round' d='m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10' /></svg>"
+      }
+    },
+    "nao_interagiu": {
+      "label": "Não Interagiu",
+      "icon": {
+        "type": "url",
+        "value": "/img/activity-monitor-icons/resource-empty.png"
+      }
+    },
+    "visualizou": {
+      "label": "Visualizou o Conteúdo",
+      "icon": {
+        "type": "url",
+        "value": "/img/activity-monitor-icons/resource-opened-purple.png"
+      }
+    },
+    "leu_conteudo": {
+      "label": "Concluiu a Leitura",
+      "icon": {
+        "type": "url",
+        "value": "/img/activity-monitor-icons/resource-opened-purple.png"
+      }
+    },
+    "correto": {
+      "label": "Resposta Correta",
+      "icon": {
+        "type": "url",
+        "value": "/img/activity-monitor-icons/resource-correct.png"
+      }
+    },
+    "incorreto": {
+      "label": "Resposta Incorreta",
+      "icon": {
+        "type": "url",
+        "value": "/img/activity-monitor-icons/resource-wrong.png"
+      }
+    },
+    "aguardando_correcao": {
+      "label": "Aguardando Correção",
+      "icon": {
+        "type": "url",
+        "value": "/img/activity-monitor-icons/resource-waiting.png"
+      }
+    },
+    "aguardando_resposta": {
+      "label": "Aguardando Resposta",
+      "icon": {
+        "type": "url",
+        "value": "/img/activity-monitor-icons/resource-request.png"
+      }
+    },
+    "default": {
+      "label": "Estado Desconhecido",
+      "icon": {
+        "type": "text",
+        "value": "●",
+        "class": "text-slate-300"
+      }
+    }
+  },
   "topics": [
     {
       "id": "topic1", "name": "Módulo 1",
@@ -23,9 +105,13 @@
     }
   ],
   "students": [
-    { "id": "s1", "name": "Alice Silvana da Cruz", "avatar": "https://i.pravatar.cc/40?u=a", "interactions": { "res1": "visualizou", "res2": "nao-visualizou", "res4": "aguardando-correcao", "res5": "aguardando-correcao", "res6": "incorreto" }},
-    { "id": "s2", "name": "Carlos Eduardo Teixeira", "avatar": "https://i.pravatar.cc/40?u=b", "interactions": { "res1": "incorreto", "res4": "incorreto", "res5": "aguardando-correcao" }},
-    { "id": "s3", "name": "Gabriel Arthur Mota", "avatar": "https://i.pravatar.cc/40?u=c", "interactions": { "res1": "correto", "res2": "correto", "res3": "correto", "res4": "incorreto", "res5": "aguardando-resposta", "res6": "correto" }},
-    { "id": "s4", "name": "Hellen Carolina Cardoso", "avatar": "https://i.pravatar.cc/40?u=d", "interactions": { "res1": "correto", "res3": "visualizou", "res4": "aguardando-correcao", "res6": "incorreto" }}
+    { "id": "s1", "name": "Alice Silvana da Cruz", "avatar": "/img/students/f02.png", "interactions": { "res1": "visualizou", "res2": "nao_interagiu", "res4": "aguardando_correcao", "res5": "aguardando_correcao", "res6": "incorreto" }},
+    { "id": "s2", "name": "Carlos Eduardo Teixeira", "avatar": "/img/students/m01.jpeg", "interactions": { "res1": "incorreto", "res4": "incorreto", "res5": "aguardando_correcao" }},
+    { "id": "s3", "name": "Gabriel Arthur Mota", "avatar": "/img/students/m60.jpg", "interactions": { "res1": "correto", "res2": "leu_conteudo", "res3": "leu_conteudo", "res4": "incorreto", "res5": "aguardando_resposta", "res6": "correto" }},
+    { "id": "s4", "name": "Hellen Carolina Cardoso", "avatar": "/img/students/f78.jpg", "interactions": { "res1": "correto", "res3": "visualizou", "res4": "aguardando_correcao", "res6": "incorreto" }},
+    { "id": "s5", "name": "Mariana Oliveira", "avatar": "/img/students/f08.jpg", "interactions": { "res1": "leu_conteudo", "res2": "visualizou", "res3": "leu_conteudo", "res4": "correto", "res5": "aguardando_correcao", "res6": "visualizou" }},
+    { "id": "s6", "name": "Lucas Pereira Costa", "avatar": "/img/students/m35.jpg", "interactions": { "res2": "visualizou", "res4": "correto", "res5": "incorreto", "res6": "visualizou" }},
+    { "id": "s7", "name": "Beatriz Almeida", "avatar": "/img/students/f94.jpg", "interactions": { "res1": "visualizou", "res2": "visualizou" }},
+    { "id": "s8", "name": "Rafael Ferreira Santos", "avatar": "/img/students/m45.jpg", "interactions": { "res1": "visualizou", "res2": "visualizou", "res4": "incorreto", "res5": "incorreto", "res6": "visualizou" }}
   ]
 }

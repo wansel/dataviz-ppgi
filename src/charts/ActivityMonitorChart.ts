@@ -150,10 +150,12 @@ function _drawStudentRows(selection, { students, scales, config, chartWidth }) {
 
 /**
  * Desenha as células de interação e anexa os eventos de tooltip.
+ * ESTA FUNÇÃO FOI SIGNIFICATIVAMENTE ALTERADA.
  */
-function _drawInteractionCells(studentRows, { flatResources, scales, config, tooltip }) {
+function _drawInteractionCells(studentRows, { flatResources, scales, interactionStates, tooltip }) {
   const { x, y } = scales;
-  
+  const iconSize = 24; // Tamanho padrão para ícones SVG/URL
+
   const cells = studentRows.selectAll(".cell")
     .data(student => flatResources.map(resource => ({
       resource: resource,
@@ -170,22 +172,59 @@ function _drawInteractionCells(studentRows, { flatResources, scales, config, too
     .attr("height", y.bandwidth())
     .attr("class", "fill-transparent");
     
-  cells.append("text")
-    .attr("x", x.bandwidth() / 2)
-    .attr("y", y.bandwidth() / 2)
-    .attr("text-anchor", "middle")
-    .attr("dominant-baseline", "middle")
-    .attr("class", d => `text-2xl ${config.stateConfig[d.state]?.class || config.stateConfig.default.class}`)
-    .text(d => config.stateConfig[d.state]?.icon || config.stateConfig.default.icon)
-    .style("pointer-events", "none"); // Garante que o evento do mouse seja capturado pelo grupo 'g'
+  // Usa .each() para renderizar condicionalmente o tipo de ícone correto
+  cells.each(function(d) {
+    const cellGroup = d3.select(this);
+    const stateKey = d.state || 'nao_interagiu'; // Usa um estado padrão se não houver interação
+    const stateDef = interactionStates[stateKey] || interactionStates['default'];
+
+    if (!stateDef) return; // Não renderiza nada se o estado não for definido
+
+    const icon = stateDef.icon;
+    const xPos = x.bandwidth() / 2;
+    const yPos = y.bandwidth() / 2;
+
+    switch (icon.type) {
+      case 'text':
+        cellGroup.append("text")
+          .attr("x", xPos)
+          .attr("y", yPos)
+          .attr("text-anchor", "middle")
+          .attr("dominant-baseline", "middle")
+          .attr("class", `text-2xl ${icon.class || ''}`)
+          .text(icon.value);
+        break;
+
+      case 'url':
+        cellGroup.append("image")
+          .attr("href", icon.value)
+          .attr("x", xPos - (iconSize / 2))
+          .attr("y", yPos - (iconSize / 2))
+          .attr("width", iconSize)
+          .attr("height", iconSize);
+        break;
+      
+      case 'svg':
+        cellGroup.append("g")
+          .html(icon.value)
+          .attr("transform", `translate(${xPos - (iconSize / 2)}, ${yPos - (iconSize / 2)})`)
+          .select("svg")
+          .attr("width", iconSize)
+          .attr("height", iconSize);
+        break;
+    }
+  });
 
   // Anexa os eventos ao grupo da célula
   cells.on("mouseover", (event, d) => {
-    const stateLabel = (d.state || "Não interagiu").replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    const stateKey = d.state || 'nao_interagiu';
+    const stateDef = interactionStates[stateKey] || interactionStates['default'];
+    if (!stateDef) return;
+
     const tooltipHtml = `
       <div class="font-bold border-b border-slate-600 pb-2 mb-2">${d.resource.name}</div>
       <div class="flex flex-col space-y-1">
-        <div><span class="font-semibold text-slate-400">Status:</span> ${stateLabel}</div>
+        <div><span class="font-semibold text-slate-400">Status:</span> ${stateDef.label}</div>
         <div><span class="font-semibold text-slate-400">Tipo:</span> ${d.resource.type}</div>
         <div class="mt-1 pt-1 border-t border-slate-700 text-slate-300 italic">${d.resource.description}</div>
       </div>
@@ -202,29 +241,18 @@ function _drawInteractionCells(studentRows, { flatResources, scales, config, too
 const DEFAULTS = {
   margin: { top: 120, right: 20, bottom: 50, left: 250 },
   rowHeight: 60,
-  columnWidth: 100,
-  stateConfig: {
-    'correto': { icon: '✓', class: 'text-emerald-500 font-bold' },
-    'incorreto': { icon: '✕', class: 'text-red-500 font-bold' },
-    'visualizou': { icon: '👁', class: 'text-sky-500' },
-    'nao-visualizou': { icon: '➖', class: 'text-slate-300' },
-    'aguardando-resposta': { icon: '💬', class: 'text-amber-500' },
-    'aguardando-correcao': { icon: '📝', class: 'text-blue-500' },
-    'default': { icon: '●', class: 'text-slate-300' }
-  }
+  columnWidth: 100
 };
 
 /**
  * Renderiza o gráfico ActivityMonitor.
- * @param {string} selector - Seletor CSS para o container.
- * @param {object} data - Os dados brutos do arquivo JSON.
- * @param {object} options - Opções de configuração para customizar a visualização.
  */
 export function drawActivityMonitor(selector, data, options = {}) {
   // 1. Validação e Configuração
   const container = d3.select(selector);
-  if (container.empty() || !data || !data.students) {
-    console.error("Erro: Seletor inválido ou dados ausentes.");
+  // Validação agora checa pela presença de `interactionStates`
+  if (container.empty() || !data || !data.students || !data.interactionStates) {
+    console.error("Erro: Seletor inválido ou dados ausentes/incompletos (requer `students` e `interactionStates`).");
     return;
   }
   
@@ -232,7 +260,6 @@ export function drawActivityMonitor(selector, data, options = {}) {
     ...DEFAULTS,
     ...options,
     margin: { ...DEFAULTS.margin, ...options.margin },
-    stateConfig: { ...DEFAULTS.stateConfig, ...options.stateConfig }
   };
   container.html("");
 
@@ -254,5 +281,6 @@ export function drawActivityMonitor(selector, data, options = {}) {
   // 4. Desenho dos Componentes do Gráfico
   _drawHeaders(svg, { headers, flatResources, scales });
   const studentRows = _drawStudentRows(svg, { students: data.students, scales, config, chartWidth });
-  _drawInteractionCells(studentRows, { flatResources, scales, config, tooltip });
+  // Passa `data.interactionStates` em vez de `config`
+  _drawInteractionCells(studentRows, { flatResources, scales, interactionStates: data.interactionStates, tooltip });
 }
