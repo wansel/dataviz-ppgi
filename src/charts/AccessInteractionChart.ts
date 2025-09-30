@@ -305,7 +305,15 @@ export function drawInteractionChart(
 
   container.append("div")
     .attr("class", "mt-4 flex items-center justify-center")
-    .html(`...`) // O HTML do toggle permanece o mesmo
+    .html(`
+      <label class="flex items-center cursor-pointer">
+        <span class="mr-3 text-sm font-medium text-gray-900">Interações detalhadas</span>
+        <div class="relative">
+          <input type="checkbox" id="detailsToggle" class="sr-only peer">
+          <div class="w-11 h-6 bg-gray-400 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+        </div>
+      </label>
+    `)
     .select("#detailsToggle")
     .on("change", toggleDetails);
 

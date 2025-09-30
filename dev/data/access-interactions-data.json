@@ -53,7 +53,7 @@
     {
       "id": "student-02",
       "name": "Carla Assis de Teixeira",
-      "avatarUrl": "https://i.pravatar.cc/150?u=carlos",
+      "avatarUrl": "img/students/f01.jpeg",
       "totalTimeMinutes": 300,
       "dailyData": [
         {
@@ -75,7 +75,7 @@
     {
       "id": "student-03",
       "name": "Diego Matheus Barbosa",
-      "avatarUrl": "https://i.pravatar.cc/150?u=bruna",
+      "avatarUrl": "img/students/m96.jpg",
       "totalTimeMinutes": 240,
       "dailyData": [
         {
@@ -96,7 +96,7 @@
     {
       "id": "student-04",
       "name": "Bruna Fernandes de Oliveira",
-      "avatarUrl": "https://i.pravatar.cc/150?u=diego",
+      "avatarUrl": "img/students/f43.jpg",
       "totalTimeMinutes": 150,
       "dailyData": [
         {
@@ -116,7 +116,7 @@
     {
       "id": "student-05",
       "name": "Fábio Henrique Nogueira",
-      "avatarUrl": "https://i.pravatar.cc/150?u=elaine",
+      "avatarUrl": "img/students/m60.jpg",
       "totalTimeMinutes": 200,
       "dailyData": [
         {
@@ -137,7 +137,7 @@
     {
       "id": "student-06",
       "name": "Elaine Rocha Martins",
-      "avatarUrl": "https://i.pravatar.cc/150?u=fabio",
+      "avatarUrl": "img/students/f90.jpg",
       "totalTimeMinutes": 270,
       "dailyData": [
         {
@@ -158,7 +158,7 @@
     {
       "id": "student-07",
       "name": "Gabriela Moura Santos",
-      "avatarUrl": "https://i.pravatar.cc/150?u=gabriela",
+      "avatarUrl": "img/students/f67.jpg",
       "totalTimeMinutes": 210,
       "dailyData": [
         {
