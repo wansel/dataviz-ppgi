@@ -1,4 +1,4 @@
-// vite.config.demo.ts (VERSÃO CORRIGIDA)
+// vite.config.demo.ts
 
 import { defineConfig } from 'vite';
 import tailwindcss from '@tailwindcss/vite'; // Não precisa de config aqui
@@ -20,6 +20,7 @@ export default defineConfig({
 
   // Removido 'root: "dev"'. Agora operamos a partir da raiz '.' (padrão).
   // root: 'dev', // REMOVIDO
+  root: '.', // permite rodar a partir da raiz do projeto
 
   build: {
     //  caminho de saída agora é relativo à raiz do projeto.
