@@ -5,25 +5,25 @@
     "video": {
       "name": "Vídeos",
       "legend": "Assistindo conteúdo disponibilizado na plataforma.",
-      "iconUrl": "/img/icon-video.png",
+      "iconUrl": "img/icon-video.png",
       "color": "#D183F7"
     },
     "quiz": {
       "name": "Questões",
       "legend": "Respondendo a questões na plataforma.",
-      "iconUrl": "/img/icon-question.png",
+      "iconUrl": "img/icon-question.png",
       "color": "#70AED4"
     },
     "reading": {
       "name": "Leitura",
       "legend": "Lendo conteúdo disponibilizado na plataforma.",
-      "iconUrl": "/img/icon-reading.png",
+      "iconUrl": "img/icon-reading.png",
       "color": "#88EB8D"
     },
     "live": {
       "name": "Síncrono",
       "legend": "Aulas, atividades em grupo, etc.",
-      "iconUrl": "/img/icon-live.png",
+      "iconUrl": "img/icon-live.png",
       "color": "#D80000"
     }
   },
@@ -31,7 +31,7 @@
     {
       "id": "student-01",
       "name": "Alice Silvana da Cruz",
-      "avatarUrl": "/img/students/f02.png",
+      "avatarUrl": "img/students/f02.png",
       "totalTimeMinutes": 180,
       "dailyData": [
         {
