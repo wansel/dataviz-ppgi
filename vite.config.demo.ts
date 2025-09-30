@@ -28,4 +28,5 @@ export default defineConfig({
   },
   // Essencial para que os caminhos funcionem no GitHub Pages
   base: '/dataviz-ppgi/',
+  publicDir: 'public', // Garante que o Vite sabe onde está a sua pasta pública
 });
