@@ -150,9 +150,8 @@ function _drawStudentRows(selection, { students, scales, config, chartWidth }) {
 
 /**
  * Desenha as células de interação e anexa os eventos de tooltip.
- * ESTA FUNÇÃO FOI SIGNIFICATIVAMENTE ALTERADA.
  */
-function _drawInteractionCells(studentRows, { flatResources, scales, interactionStates, tooltip }) {
+function _drawInteractionCells(studentRows, { flatResources, scales, interactionStates, tooltip, config }) {
   const { x, y } = scales;
   const iconSize = 24; // Tamanho padrão para ícones SVG/URL
 
@@ -194,7 +193,16 @@ function _drawInteractionCells(studentRows, { flatResources, scales, interaction
           .attr("class", `text-2xl ${icon.class || ''}`)
           .text(icon.value);
         break;
-
+      
+        case 'asset':
+        cellGroup.append("image")
+          .attr("href", `${config.basePath}${icon.value}`) // Aplica o basePath
+          .attr("x", xPos - (iconSize / 2))
+          .attr("y", yPos - (iconSize / 2))
+          .attr("width", iconSize)
+          .attr("height", iconSize);
+        break;
+      
       case 'url':
         cellGroup.append("image")
           .attr("href", icon.value)
@@ -283,5 +291,5 @@ export function drawActivityMonitor(selector, data, options = {}) {
   _drawHeaders(svg, { headers, flatResources, scales });
   const studentRows = _drawStudentRows(svg, { students: data.students, scales, config, chartWidth });
   // Passa `data.interactionStates` em vez de `config`
-  _drawInteractionCells(studentRows, { flatResources, scales, interactionStates: data.interactionStates, tooltip });
+  _drawInteractionCells(studentRows, { flatResources, scales, interactionStates: data.interactionStates, tooltip, config });
 }
