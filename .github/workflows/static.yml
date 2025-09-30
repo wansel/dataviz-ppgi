@@ -21,38 +21,35 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      # 1. Pega o código do repositório (sem alterações)
+      # 1. Pega o código do repositório
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. Configura o Node.js (sem alterações)
+      # 2. Configura o Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 23
+          node-version: 18
 
-      # 3. Instala as dependências (sem alterações)
+      # 3. Instala as dependências
       - name: Install dependencies
         run: npm install
 
-      # 4. RODA O BUILD DA DEMO DIRETAMENTE PELA LINHA DE COMANDO
+      # 4. Roda o build da demo usando o arquivo de config específico
       - name: Build Demo Pages
-        run: >
-          npx vite build dev 
-          --outDir dist-demo 
-          --base=/${{ github.event.repository.name }}/
+        run: npx vite build --config vite.config.demo.ts
         
-      # 5. Prepara os artefatos para o upload (sem alterações)
+      # 5. Prepara os artefatos para o upload
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      # 6. Faz o upload do conteúdo da pasta de saída definida acima
+      # 6. Faz o upload do conteúdo da pasta 'dist-demo'
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './dist-demo' # Aponta para o diretório de saída que especificamos
+          path: './dist-demo'
 
-      # 7. Faz o deploy para o GitHub Pages (sem alterações)
+      # 7. Faz o deploy para o GitHub Pages
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
