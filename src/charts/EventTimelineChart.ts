@@ -27,13 +27,14 @@ interface Options {
   title?: string,
   subtitle?: string,
   imgPath?: string;
+  basePath?: string; // Caminho base das imagens
   width?: number;
   height?: number;
   box?: number;
   initialDelay?: number; // valor inicial do atraso (minutos)
   initialSort?: {
     column: "name" | "stats";
-    order?: "asc" | "desc"; // A ordem também pode ser opcional, com 'asc' como padrão
+    order?: "asc" | "desc";
   }
 }
 
@@ -49,38 +50,35 @@ export function drawEventTimeline(
   data: TimelineData,
   options: Options = {}
 ){
+  // ADICIONADO: Processa a opção basePath, com uma string vazia como padrão.
+  const basePath = options.basePath ?? '';
+
   const margin = { top: 50, right: 20, bottom: 40, left: 350 };
-  // margin.left é o espaço reservado para o nome e a coluna de info
   const width = 900 - margin.left - margin.right;
   const height = 500 - margin.top - margin.bottom;
   
-  //Definindo duração do evento
   const eventDurationMinutes = (data.event.end.getTime() - data.event.start.getTime()) / (1000 * 60);
   let delayThreshold = options.initialDelay ?? 15;
 
-  // 1. Define o estado da ordenação com base nas opções ou no padrão.
   let sortBy: { column: "name" | "stats" | null, order: "asc" | "desc" };
   if (options.initialSort) {
-    // Se uma ordenação foi passada nas opções, use-a.
     sortBy = {
       column: options.initialSort.column,
-      order: options.initialSort.order || "asc" // 'asc' é o padrão se a ordem não for especificada
+      order: options.initialSort.order || "asc"
     };
   } else {
-    // CASO CONTRÁRIO, DEFINE O PADRÃO: alfabético por nome.
     sortBy = {
       column: "name",
       order: "asc"
     };
   }
-  // 2. Aplica a ordenação inicial ao array de dados.
-  // Isso garante que os dados já estejam na ordem correta antes do desenho.
+
   if (sortBy.column) {
     const sortOrder = sortBy.order === "asc" ? d3.ascending : d3.descending;
     data.students.sort((a, b) => {
       if (sortBy.column === 'name') {
         return sortOrder(a.name, b.name);
-      } else { // 'stats'
+      } else {
         const totalA = d3.sum(a.sessions, s => getMinutesWithinEvent(s, data.event.start, data.event.end));
         const totalB = d3.sum(b.sessions, s => getMinutesWithinEvent(s, data.event.start, data.event.end));
         return sortOrder(totalA, totalB);
@@ -88,13 +86,11 @@ export function drawEventTimeline(
     });
   }
 
-  // Container principal
   const container = d3.select(selector);
   if (container.empty()) {
     console.error(`Elemento não encontrado para o seletor: "${selector}"`);
     return;
   }
-  // Limpa o conteúdo anterior para evitar duplicatas ao redesenhar
   container.html("");
 
   const svg = container
@@ -113,12 +109,9 @@ export function drawEventTimeline(
                     0.3333 0.3333 0.3333 0 0 \
                     0      0      0      1 0");
 
-  
-  //Grupo principal do gráfico (deslocado pela margem)
   const chartArea = svg.append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
-  // Escalas
   const marginMinutes = 30;
   const ms = marginMinutes * 60 * 1000;
   const x = d3.scaleTime()
@@ -130,8 +123,6 @@ export function drawEventTimeline(
     .range([0, height])
     .padding(0);
 
-
-  // Fundo do evento (retângulo cinza)
   chartArea.append('rect')
     .attr('x', x(data.event.start))
     .attr('y', 0)
@@ -140,18 +131,14 @@ export function drawEventTimeline(
     .attr('fill', '#e0e0e05a')
     .lower();
 
-  // Eixo X
   chartArea.append('g')
     .attr('transform', `translate(0,${height})`)
     .call(d3.axisBottom(x).ticks(d3.timeHour.every(1)).tickFormat(d3.timeFormat('%H:%M')));
 
-  // Construção dos cabeçalhos
-  // Grupo de cabeçalhos
   const headerGroup = svg.append("g")
     .attr("class", "headers")
-    .attr("transform", `translate(${margin.left}, ${margin.top - 20})`); // Era - 10
+    .attr("transform", `translate(${margin.left}, ${margin.top - 20})`);
 
-  // ===== Coluna "Estudante"
   headerGroup.append("text")
     .attr("x", -margin.left + 10)
     .attr("y", 0)
@@ -159,8 +146,6 @@ export function drawEventTimeline(
     .text("Estudante")
     .on("click", () => handleSort("name"));
 
-
-  // ===== Coluna "Tempo/Conexões"
   headerGroup.append("text")
     .attr("x", -120)
     .attr("y", 0)
@@ -168,51 +153,37 @@ export function drawEventTimeline(
     .text("Tempo/Conexões")
     .on("click", () => handleSort("stats"));
 
-
-  // ===== Coluna "Antes"
   headerGroup.append("text")
-    .attr("x", x(data.event.start) - 10) // um pouco antes do retângulo cinza
+    .attr("x", x(data.event.start) - 10)
     .attr("y", -5)
     .attr("text-anchor", "end")
-    // .style("font-weight", "bold")
     .style("font-size", "13px")
     .text("Antes");
 
-  // ===== Coluna "Durante"
   headerGroup.append("text")
-    .attr("x", (x(data.event.start) + x(data.event.end)) / 2) // centraliza no retângulo cinza
+    .attr("x", (x(data.event.start) + x(data.event.end)) / 2)
     .attr("y", -5)
     .attr("text-anchor", "middle")
     .style("font-weight", "bold")
     .style("font-size", "13px")
     .text("Durante");
 
-  // ===== Coluna "Depois"
   headerGroup.append("text")
-    .attr("x", x(data.event.end) + 20) // logo após o retângulo cinza
+    .attr("x", x(data.event.end) + 20)
     .attr("y", -5)
     .attr("text-anchor", "start")
-    // .style("font-weight", "bold")
     .style("font-size", "13px")
     .text("Depois");
 
-
-  /**
-   * Função principal que cria e posiciona todas as linhas de estudantes.
-   */
   function redraw() {
-    // Vincula os dados a grupos <g>, usando o nome do estudante como chave.
-    // A chave é crucial para que o D3 mantenha a correspondência correta dos elementos durante as atualizações.
     const studentRowGroups = chartArea.selectAll<SVGGElement, StudentData>(".student-row")
       .data(data.students, d => d.name)
       .join(
-        // ENTER: Cria a estrutura base para cada novo estudante.
         enter => {
           const g = enter.append("g")
             .attr("class", "student-row")
             .attr("transform", d => `translate(0, ${y(d.name)!})`);
 
-          // 1. Fundo da linha (Zebra)
           g.append("rect")
             .attr("class", "row-bg")
             .attr("x", -margin.left)
@@ -220,10 +191,9 @@ export function drawEventTimeline(
             .attr("width", width + margin.left + margin.right)
             .attr("height", y.bandwidth())
             .attr("fill", (_, i) => (i % 2 === 0 ? '#FFFFFF' : '#F8F8F8'))
-            .attr('fill-opacity', 0.5) // opacidade reduzida;
+            .attr('fill-opacity', 0.5)
             .lower();
 
-          // 2. Avatar
           const avatarSize = y.bandwidth() * 0.8;
           g.append("image")
             .attr("class", "student-avatar")
@@ -231,19 +201,18 @@ export function drawEventTimeline(
             .attr("y", (y.bandwidth() - avatarSize) / 2)
             .attr("width", avatarSize)
             .attr("height", avatarSize)
-            .attr("href", d => d.avatar)
+            .attr("href", d => `${basePath}${d.avatar}`) // Adiciona o basePath ao href do avatar.
             .attr("clip-path", "circle(50%)");
 
-          // 3. Ícone de status (offline)
           g.append("image")
             .attr("class", "status-icon")
-            .attr("xlink:href", d => d.sessions.length === 0 ? "/img/offline.png" : null)
+            // MODIFICADO: Adiciona o basePath ao ícone de status e remove a barra inicial.
+            .attr("xlink:href", d => d.sessions.length === 0 ? `${basePath}img/offline.png` : null)
             .attr("x", -margin.left + 10)
             .attr("y", 4)
             .attr("width", 16)
             .attr("height", 16);
 
-          // 4. Nome do estudante (com quebra de linha)
           const nameText = g.append("text")
             .attr("class", "student-name")
             .attr("x", -margin.left + 10 + avatarSize + 6)
@@ -267,7 +236,7 @@ export function drawEventTimeline(
               });
               if (line) lines.push(line.trim());
               
-              textElement.attr("y", y.bandwidth() / 2 - (lines.length -1) * 7); // Ajuste vertical para múltiplas linhas
+              textElement.attr("y", y.bandwidth() / 2 - (lines.length -1) * 7);
 
               lines.forEach((ln, i) => {
                   textElement.append("tspan")
@@ -277,7 +246,6 @@ export function drawEventTimeline(
               });
           });
 
-          // 5. Texto de estatísticas (Tempo/Conexões)
           g.append("text")
             .attr("class", "student-stats")
             .attr("x", -120)
@@ -285,7 +253,6 @@ export function drawEventTimeline(
             .style("font-size", "12px")
             .attr("dominant-baseline", "central");
 
-          // 6. Fundo cinza claro para a área das barras
           g.append("rect")
             .attr("class", "timeline-bg")
             .attr("x", 0)
@@ -295,7 +262,6 @@ export function drawEventTimeline(
             .attr("fill", "#00000011")
             .lower();
 
-          // 7. Container para as barras de sessão
           g.append("g")
             .attr("class", "session-bars-container");
 
@@ -303,23 +269,15 @@ export function drawEventTimeline(
         }
       );
 
-    // Após criar a estrutura, atualiza os elementos dinâmicos (cores e texto)
     updateColorsAndStats(studentRowGroups);
     updateHeaderIcons();
   }
 
-  /**
-   * Atualiza apenas os elementos que dependem do `delayThreshold` (cores e estatísticas).
-   * É mais leve do que redesenhar tudo.
-   * @param selection A seleção D3 dos grupos de estudantes a serem atualizados.
-   */
   function updateColorsAndStats(selection: d3.Selection<SVGGElement, StudentData, SVGGElement, unknown>) {
     const barHeight = 15;
 
     selection.each(function(d) {
       const studentRow = d3.select(this);
-
-      // --- Cálculos ---
       const totalMinutes = d3.sum(d.sessions, s => getMinutesWithinEvent(s, data.event.start, data.event.end));
       const totalSessions = d.sessions.length;
       const barColor = totalMinutes < delayThreshold
@@ -328,22 +286,17 @@ export function drawEventTimeline(
         ? "#2196f3"
         : "#f4b400";
 
-      // --- Atualizações ---
-
-      // Atualiza filtro do avatar
       studentRow.select<SVGImageElement>(".student-avatar")
         .attr("filter", totalSessions === 0 ? "url(#grayscale)" : null);
 
-      // Atualiza texto de estatísticas
       const statsText = studentRow.select<SVGTextElement>(".student-stats");
-      statsText.selectAll("tspan").remove(); // Limpa antes de adicionar
+      statsText.selectAll("tspan").remove();
       const hours = Math.floor(totalMinutes / 60);
       const minutes = Math.round(totalMinutes % 60);
       const timeLabel = `${hours > 0 ? hours + "h" : ""}${minutes}m`;
       statsText.append("tspan").attr("x", -120).attr("dy", "-0.5em").text(timeLabel);
       statsText.append("tspan").attr("x", -120).attr("dy", "1.2em").text(`${totalSessions} con.`);
 
-      // Atualiza barras de sessão (Data Join aninhado)
       studentRow.select<SVGGElement>(".session-bars-container")
         .selectAll("rect")
         .data(d.sessions)
@@ -356,72 +309,39 @@ export function drawEventTimeline(
     });
   }
 
-  /**
-   * Lida com a lógica de ordenação e dispara a transição.
-   */
   function updateScalesAndRedraw() {
-    // 1. Atualiza o domínio da escala Y com a nova ordem dos estudantes
     y.domain(data.students.map(d => d.name));
-
-    // Define a transição para ser usada em todos os elementos
     const t = svg.transition().duration(750);
-
-    // 2. ✨ RE-VINCULA OS DADOS À SELEÇÃO (PASSO CRUCIAL) ✨
-    // Esta linha informa ao D3 sobre a nova ordem dos dados.
-    // A função de chave (d => d.name) é essencial para garantir que o D3
-    // mantenha o mesmo elemento DOM para cada estudante, apenas reordenando a seleção.
     const studentRows = chartArea.selectAll<SVGGElement, StudentData>(".student-row")
       .data(data.students, d => d.name);
 
-    // 3. Transiciona cada grupo `.student-row` para sua nova posição vertical
     studentRows.transition(t)
       .attr("transform", d => `translate(0, ${y(d.name)!})`);
 
-    // 4. ATUALIZA A COR DO FUNDO (ZEBRA) DURANTE A TRANSIÇÃO
-    // Como os dados foram re-vinculados no passo 2, o índice 'i' aqui
-    // agora corresponde à nova posição do estudante, corrigindo o padrão de cores.
     studentRows.select<SVGRectElement>(".row-bg")
       .transition(t)
       .attr("fill", (_, i) => {
-        // Agora o 'i' está correto!
         return i % 2 === 0 ? '#FFFFFF' : '#F8F8F8';
-      })
-      // .attr('fill-opacity', 0.7) // opacidade reduzida;
-      ;
+      });
   }
   
-
-  /**
-   * Atualiza os ícones de ordenação e o estilo dos cabeçalhos
-   * com base no estado atual da variável `sortBy`.
-   */
   function updateHeaderIcons() {
-    // Seleciona os dois cabeçalhos usando as classes que adicionamos
     const nameHeader = headerGroup.select(".sort-name");
     const statsHeader = headerGroup.select(".sort-stats");
-    
-    // Define o ícone de seta (▲ para asc, ▼ para desc)
     const icon = sortBy.order === 'asc' ? ' ▲' : ' ▼';
 
-    // Atualiza o cabeçalho "Estudante"
     if (sortBy.column === 'name') {
       nameHeader.text("Estudante" + icon);
-      // D3.classed() é uma forma fácil de adicionar/remover uma classe
-      nameHeader.classed("font-bold", true); // Deixa em negrito se estiver ativo
-      statsHeader.classed("font-bold", false).text("Tempo/Conexões"); // Garante que o outro fique normal
+      nameHeader.classed("font-bold", true);
+      statsHeader.classed("font-bold", false).text("Tempo/Conexões");
     } 
-    // Atualiza o cabeçalho "Tempo/Conexões"
     else if (sortBy.column === 'stats') {
       statsHeader.text("Tempo/Conexões" + icon);
-      statsHeader.classed("font-bold", true); // Deixa em negrito se estiver ativo
-      nameHeader.classed("font-bold", false).text("Estudante"); // Garante que o outro fique normal
+      statsHeader.classed("font-bold", true);
+      nameHeader.classed("font-bold", false).text("Estudante");
     }
   }
 
-
-  /**
-   * Centraliza a lógica de clique nos cabeçalhos para ordenação
-   */
   function handleSort(column: "name" | "stats"){
       if (sortBy.column === column) {
         sortBy.order = sortBy.order === "asc" ? "desc" : "asc";
@@ -430,7 +350,6 @@ export function drawEventTimeline(
         sortBy.order = "asc";
       }
 
-      // Atualiza os ícones indicadores de ordenação
       updateHeaderIcons();
       
       const sortOrder = sortBy.order === "asc" ? d3.ascending : d3.descending;
@@ -438,7 +357,7 @@ export function drawEventTimeline(
       data.students.sort((a, b) => {
           if (column === 'name') {
               return sortOrder(a.name, b.name);
-          } else { // stats
+          } else {
               const totalA = d3.sum(a.sessions, s => getMinutesWithinEvent(s, data.event.start, data.event.end));
               const totalB = d3.sum(b.sessions, s => getMinutesWithinEvent(s, data.event.start, data.event.end));
               return sortOrder(totalA, totalB);
@@ -448,10 +367,8 @@ export function drawEventTimeline(
       updateScalesAndRedraw();
   }
 
-
-  // Controles (Input de Atraso)
   const controls = container.append("div").attr("class", "mt-4 flex justify-center items-center gap-2");
-  controls.append("label").attr("for", "delay-input").text("Atraso (min):");
+  controls.append("label").attr("for", "delay-input").text("Ausência (min):");
   const delayInput = controls.append("input")
     .attr("id", "delay-input")
     .attr("type", "number")
@@ -462,10 +379,8 @@ export function drawEventTimeline(
 
   delayInput.on("input", function() {
     delayThreshold = parseInt((this as HTMLInputElement).value, 10) || 0;
-    // Chama a função mais leve, pois apenas cores e texto mudam.
     updateColorsAndStats(chartArea.selectAll(".student-row"));
   });
 
-  // Desenho inicial
   redraw();
 }
