@@ -1,0 +1,31 @@
+{
+  "topics": [
+    {
+      "id": "topic1", "name": "Módulo 1",
+      "children": [
+        {
+          "id": "subject1", "name": "Tópico I",
+          "children": [
+            { "id": "res1", "name": "Recurso 1", "type": "leitura", "description": "Material de apoio." },
+            { "id": "res2", "name": "Recurso 2", "type": "video", "description": "Vídeo explicativo." },
+            { "id": "res3", "name": "Recurso 3", "type": "leitura", "description": "Artigo complementar." }
+          ]
+        },
+        {
+          "id": "subject2", "name": "Tópico II",
+          "children": [
+            { "id": "res4", "name": "Recurso 4", "type": "objetiva", "description": "Questão de múltipla escolha." },
+            { "id": "res5", "name": "Recurso 5", "type": "subjetiva", "description": "Questão dissertativa." },
+            { "id": "res6", "name": "Recurso 6", "type": "video", "description": "Vídeo de encerramento." }
+          ]
+        }
+      ]
+    }
+  ],
+  "students": [
+    { "id": "s1", "name": "Alice Silvana da Cruz", "avatar": "https://i.pravatar.cc/40?u=a", "interactions": { "res1": "visualizou", "res2": "nao-visualizou", "res4": "aguardando-correcao", "res5": "aguardando-correcao", "res6": "incorreto" }},
+    { "id": "s2", "name": "Carlos Eduardo Teixeira", "avatar": "https://i.pravatar.cc/40?u=b", "interactions": { "res1": "incorreto", "res4": "incorreto", "res5": "aguardando-correcao" }},
+    { "id": "s3", "name": "Gabriel Arthur Mota", "avatar": "https://i.pravatar.cc/40?u=c", "interactions": { "res1": "correto", "res2": "correto", "res3": "correto", "res4": "incorreto", "res5": "aguardando-resposta", "res6": "correto" }},
+    { "id": "s4", "name": "Hellen Carolina Cardoso", "avatar": "https://i.pravatar.cc/40?u=d", "interactions": { "res1": "correto", "res3": "visualizou", "res4": "aguardando-correcao", "res6": "incorreto" }}
+  ]
+}

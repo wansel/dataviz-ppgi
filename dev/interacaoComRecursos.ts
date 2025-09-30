@@ -1,8 +1,19 @@
-import { drawInteractionChart, parseInteractionData } from '../src';
+
+import { drawActivityMonitor } from '../src';
+
 import jsonData from './data/activity-monitor-data.json';
 
-// Parseia os dados para converter strings de data em objetos Date
-const data = parseInteractionData(jsonData);
+// Chama a função de desenho diretamente com os dados do JSON
+drawActivityMonitor('#activity-monitor-chart', jsonData);
 
-// Desenha o gráfico
-drawActivityMonitor('#activity-monitor-chart', data);
+// EXEMPLO: Como usar o objeto de 'options' para customizar o gráfico
+// Para testar, descomente a linha abaixo e comente a de cima.
+/*
+drawActivityMonitor('#activity-monitor-chart', jsonData, {
+  rowHeight: 75,
+  columnWidth: 120,
+  margin: {
+    left: 300 // Aumenta o espaço para nomes de estudantes maiores
+  }
+});
+*/
