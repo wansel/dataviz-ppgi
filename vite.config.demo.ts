@@ -1,37 +1,37 @@
+// vite.config.demo.ts (VERSÃO CORRIGIDA)
+
 import { defineConfig } from 'vite';
-import tailwindcss from '@tailwindcss/vite';
+import tailwindcss from '@tailwindcss/vite'; // Não precisa de config aqui
 import { resolve } from 'path';
 import { globSync } from 'glob';
 
-// Encontra todos os arquivos .html dentro da pasta 'dev'
+// Esta lógica já funciona a partir da raiz do projeto, está perfeita.
 const htmlFiles = globSync('dev/**/*.html').map(file => [
-  // Cria um nome para a entrada, ex: 'index' ou 'tempo-no-evento'
   file.slice(file.lastIndexOf('/') + 1, file.length - 5),
-  // Cria o caminho absoluto para o arquivo, que o Vite precisa
   resolve(process.cwd(), file)
 ]);
 
 export default defineConfig({
-plugins: [
-  tailwindcss({
-    // Informa ao plugin o caminho exato para o ficheiro de configuração
-    config: resolve(process.cwd(), 'tailwind.config.js'),
-  }),
-],
-  // Define 'dev' como a raiz do projeto para este build
-  root: 'dev',
+  // O plugin do Tailwind agora irá encontrar o config automaticamente,
+  // pois estamos a correr a partir da raiz do projeto.
+  plugins: [
+    tailwindcss(),
+  ],
+
+  // Removido 'root: "dev"'. Agora operamos a partir da raiz '.' (padrão).
+  // root: 'dev', // REMOVIDO
+
   build: {
-    // Define o diretório de saída na raiz do projeto
-    outDir: '../dist-demo',
+    //  caminho de saída agora é relativo à raiz do projeto.
+    outDir: 'dist-demo', // Era '../dist-demo'
     emptyOutDir: true,
     rollupOptions: {
-      // Informa ao Vite para construir todas as páginas HTML encontradas
       input: Object.fromEntries(htmlFiles),
     },
   },
-  // Essencial para que os caminhos funcionem no GitHub Pages
+  
+  // O caminho base para o GitHub Pages continua correto.
   base: '/dataviz-ppgi/',
-  //publicDir: 'public', // Garante que o Vite sabe onde está a sua pasta pública
-  // Fornece o caminho absoluto para a pasta 'public'
-  publicDir: resolve(process.cwd(), 'public'),
+  
+  publicDir: 'public',
 });
