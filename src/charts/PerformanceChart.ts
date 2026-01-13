@@ -1,9 +1,225 @@
 import * as d3 from 'd3';
 
+interface DifficultyPerformance {
+  label: string;      // "Fácil", "Média", "Difícil"
+  correct: number;
+  incorrect: number;
+  total: number;
+}
+
+interface StudentPerformance {
+  id: string;
+  name: string;
+  avatar: string;
+  performances: DifficultyPerformance[]; // Array de 3 posições
+}
+
+interface PerformanceChartData {
+  students: StudentPerformance[];
+}
+
+interface Options {
+  basePath?: string;
+  width?: number;
+  initialSort?: {
+    column: "name";
+    order?: "asc" | "desc";
+  };
+}
+
+
+/**
+ * Função para parsear o JSON bruto. 
+ * Embora este gráfico não use objetos Date (diferente dos anteriores), 
+ * mantemos a função para garantir tipagem e consistência na sua biblioteca.
+ */
+export function parsePerformanceData(jsonData: any): PerformanceChartData {
+  if (!jsonData.students || !Array.isArray(jsonData.students)) {
+    throw new Error("Formato de JSON inválido: esperado array de estudantes.");
+  }
+  return jsonData as PerformanceChartData;
+}
+
+/**
+ * Visualização de Desempenho da Turma
+ */
 export function drawPerformanceChart(
   selector: string,
   data: PerformanceChartData,
   options: Options = {}
-){
+) {
+  // 1. Configurações Iniciais
+  const basePath = options.basePath ?? '';
+  const margin = { top: 40, right: 60, bottom: 20, left: 250 };
+  const rowHeight = 90; 
+  const width = (options.width ?? 900) - margin.left - margin.right;
+  const height = data.students.length * rowHeight;
 
+  let sortBy = options.initialSort ?? { column: "name", order: "asc" };
+
+  // 2. Ordenação Inicial dos Dados
+  const initialOrder = sortBy.order === 'asc' ? d3.ascending : d3.descending;
+  data.students.sort((a, b) => initialOrder(a.name, b.name));
+
+  const container = d3.select(selector);
+  if (container.empty()) return;
+  container.html("");
+
+  const svg = container
+    .append('svg')
+    .attr('width', width + margin.left + margin.right)
+    .attr('height', height + margin.top + margin.bottom);
+
+  const chartArea = svg.append("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+  // --- Escalas ---
+  const y = d3.scaleBand()
+    .domain(data.students.map(d => d.id))
+    .range([0, height])
+    .padding(0);
+
+  const maxTotal = d3.max(data.students.flatMap(s => s.performances.map(p => p.total))) ?? 0;
+  const x = d3.scaleLinear()
+    .domain([0, maxTotal])
+    .range([0, width * 0.7]);
+
+  // --- Cabeçalhos ---
+  const headerGroup = svg.append("g")
+    .attr("transform", `translate(20, ${margin.top - 15})`);
+
+  const studentHeader = headerGroup.append("text")
+    .attr("class", "text-sm font-bold cursor-pointer select-none")
+    .style("font-family", "sans-serif")
+    .text(`Estudante ${sortBy.order === 'asc' ? '▲' : '▼'}`)
+    .on("click", function() {
+        sortBy.order = sortBy.order === 'asc' ? 'desc' : 'asc';
+        d3.select(this).text(`Estudante ${sortBy.order === 'asc' ? '▲' : '▼'}`);
+        handleSort();
+    });
+
+  headerGroup.append("text")
+    .attr("x", margin.left - 20)
+    .attr("class", "text-sm font-semibold text-gray-600")
+    .style("font-family", "sans-serif")
+    .text("Quantidade Respondida / Total");
+
+  /**
+   * Função interna de desenho (Redraw)
+   */
+  function draw() {
+    const studentRows = chartArea.selectAll<SVGGElement, StudentPerformance>(".student-row")
+      .data(data.students, d => d.id)
+      .join(
+        enter => {
+          const g = enter.append("g")
+            .attr("class", "student-row")
+            .attr("transform", d => `translate(0, ${y(d.id)!})`);
+
+          // Fundo Zebrado
+          g.append("rect")
+            .attr("class", "row-bg")
+            .attr("x", -margin.left)
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", rowHeight)
+            .attr("fill", (_, i) => i % 2 === 0 ? "#F9FAFB" : "#FFFFFF");
+
+          // Avatar
+          g.append("image")
+            .attr("x", -margin.left + 20)
+            .attr("y", rowHeight / 2 - 25)
+            .attr("width", 50)
+            .attr("height", 50)
+            .attr("href", d => `${basePath}${d.avatar}`)
+            .attr("clip-path", "circle(50%)");
+
+          // Nome
+          g.append("text")
+            .attr("x", -margin.left + 80)
+            .attr("y", rowHeight / 2)
+            .attr("dominant-baseline", "middle")
+            .attr("class", "text-sm font-medium")
+            .style("font-family", "sans-serif")
+            .text(d => d.name);
+
+          // Container para as 3 barras
+          g.append("g")
+            .attr("class", "bars-group")
+            .attr("transform", `translate(0, 15)`);
+
+          return g;
+        }
+      );
+
+    // Atualiza as sub-barras (Nested Selection)
+    studentRows.each(function(student) {
+      const g = d3.select(this).select(".bars-group");
+      const subBarHeight = 12;
+      const subBarSpacing = 6;
+
+      student.performances.forEach((perf, i) => {
+        const yPos = i * (subBarHeight + subBarSpacing);
+        const barGroup = g.selectAll(`.diff-bar-${i}`).data([perf]).join("g").attr("class", `diff-bar-${i}`);
+
+        // Barra Cinza (Total)
+        barGroup.selectAll(".bg-bar").data([perf]).join("rect")
+          .attr("x", 0)
+          .attr("y", yPos)
+          .attr("width", x(perf.total))
+          .attr("height", subBarHeight)
+          .attr("fill", "#E5E7EB")
+          .attr("rx", 2);
+
+        // Barra Vermelha (Erros)
+        barGroup.selectAll(".err-bar").data([perf]).join("rect")
+          .attr("x", 0)
+          .attr("y", yPos)
+          .attr("width", x(perf.incorrect))
+          .attr("height", subBarHeight)
+          .attr("fill", "#EF4444")
+          .attr("rx", 2);
+
+        // Barra Verde (Acertos)
+        barGroup.selectAll(".corr-bar").data([perf]).join("rect")
+          .attr("x", x(perf.incorrect))
+          .attr("y", yPos)
+          .attr("width", x(perf.correct))
+          .attr("height", subBarHeight)
+          .attr("fill", "#10B981")
+          .attr("rx", 2);
+
+        // Texto da Fração (00/00)
+        barGroup.selectAll(".fraction-text").data([perf]).join("text")
+          .attr("x", x(perf.total) + 10)
+          .attr("y", yPos + subBarHeight / 2)
+          .attr("dominant-baseline", "middle")
+          .attr("class", "text-xs text-gray-500")
+          .style("font-family", "monospace")
+          .text(`${(perf.correct + perf.incorrect).toString().padStart(2, '0')}/${perf.total.toString().padStart(2, '0')}`);
+      });
+    });
+  }
+
+  /**
+   * Lógica de Reordenação com Transição
+   */
+  function handleSort() {
+    const order = sortBy.order === 'asc' ? d3.ascending : d3.descending;
+    data.students.sort((a, b) => order(a.name, b.name));
+    y.domain(data.students.map(d => d.id));
+    
+    const t = svg.transition().duration(750);
+    
+    const rows = chartArea.selectAll<SVGGElement, StudentPerformance>(".student-row")
+      .data(data.students, d => d.id);
+
+    rows.transition(t)
+      .attr("transform", d => `translate(0, ${y(d.id)!})`);
+
+    rows.select<SVGRectElement>(".row-bg")
+      .transition(t)
+      .attr("fill", (_, i) => i % 2 === 0 ? "#F9FAFB" : "#FFFFFF");
+  }
+
+  draw();
 }

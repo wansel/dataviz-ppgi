@@ -1,0 +1,44 @@
+{
+  "students": [
+    {
+      "id": "st-001",
+      "name": "Alice Silvana da Cruz",
+      "avatar": "img/students/f02.png",
+      "performances": [
+        { "label": "Fácil", "correct": 12, "incorrect": 2, "total": 26 },
+        { "label": "Média", "correct": 4, "incorrect": 2, "total": 12 },
+        { "label": "Difícil", "correct": 2, "incorrect": 1, "total": 8 }
+      ]
+    },
+    {
+      "id": "st-002",
+      "name": "Carlos Eduardo Assis de Teixeira",
+      "avatar": "img/students/m60.jpg",
+      "performances": [
+        { "label": "Fácil", "correct": 8, "incorrect": 10, "total": 26 },
+        { "label": "Média", "correct": 1, "incorrect": 1, "total": 12 },
+        { "label": "Difícil", "correct": 0, "incorrect": 1, "total": 8 }
+      ]
+    },
+    {
+      "id": "st-003",
+      "name": "Gabriel Arthur Mota",
+      "avatar": "img/students/f43.jpg",
+      "performances": [
+        { "label": "Fácil", "correct": 11, "incorrect": 2, "total": 26 },
+        { "label": "Média", "correct": 4, "incorrect": 2, "total": 12 },
+        { "label": "Difícil", "correct": 3, "incorrect": 1, "total": 8 }
+      ]
+    },
+    {
+      "id": "st-004",
+      "name": "Hellen Carolina Ester Cardoso",
+      "avatar": "img/students/f67.jpg",
+      "performances": [
+        { "label": "Fácil", "correct": 10, "incorrect": 5, "total": 26 },
+        { "label": "Média", "correct": 0, "incorrect": 1, "total": 12 },
+        { "label": "Difícil", "correct": 0, "incorrect": 0, "total": 8 }
+      ]
+    }
+  ]
+}
