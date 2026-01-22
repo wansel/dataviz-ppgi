@@ -125,6 +125,7 @@ export function drawPerformanceChart(
             .attr("fill", (_, i) => i % 2 === 0 ? "#F9FAFB" : "#FFFFFF");
 
           // Avatar
+          const avatarSize = y.bandwidth() * 0.8;
           g.append("image")
             .attr("x", -margin.left + 20)
             .attr("y", rowHeight / 2 - 25)
@@ -134,13 +135,45 @@ export function drawPerformanceChart(
             .attr("clip-path", "circle(50%)");
 
           // Nome
-          g.append("text")
-            .attr("x", -margin.left + 80)
-            .attr("y", rowHeight / 2)
-            .attr("dominant-baseline", "middle")
-            .attr("class", "text-sm font-medium")
-            .style("font-family", "sans-serif")
-            .text(d => d.name);
+          // g.append("text")
+          //   .attr("x", -margin.left + 80)
+          //   .attr("y", rowHeight / 2)
+          //   .attr("dominant-baseline", "middle")
+          //   .attr("class", "text-sm font-medium")
+          //   .style("font-family", "sans-serif")
+          //   .text(d => d.name);
+          const nameText = g.append("text")
+            .attr("class", "student-name")
+            .attr("x", -margin.left + 10 + avatarSize + 6)
+            .attr("y", y.bandwidth() / 2)
+            .style("font-size", "12px")
+            .attr("dominant-baseline", "central");
+
+          nameText.each(function(d) {
+              const textElement = d3.select(this);
+              const maxChars = 20;
+              const words = d.name.split(" ");
+              let line = "";
+              const lines: string[] = [];
+              words.forEach(w => {
+                  if ((line + " " + w).trim().length > maxChars) {
+                      lines.push(line.trim());
+                      line = w;
+                  } else {
+                      line = (line + " " + w).trim();
+                  }
+              });
+              if (line) lines.push(line.trim());
+              
+              textElement.attr("y", y.bandwidth() / 2 - (lines.length -1) * 7);
+
+              lines.forEach((ln, i) => {
+                  textElement.append("tspan")
+                      .attr("x", -margin.left + 10 + avatarSize + 6)
+                      .attr("dy", i === 0 ? 0 : "1.2em")
+                      .text(ln);
+              });
+          });
 
           // Container para as 3 barras
           g.append("g")
@@ -154,7 +187,7 @@ export function drawPerformanceChart(
     // Atualiza as sub-barras (Nested Selection)
     studentRows.each(function(student) {
       const g = d3.select(this).select(".bars-group");
-      const subBarHeight = 12;
+      const subBarHeight = 16;
       const subBarSpacing = 6;
 
       student.performances.forEach((perf, i) => {
