@@ -65,6 +65,21 @@ export function drawPerformanceChart(
   if (container.empty()) return;
   container.html("");
 
+  // --- ADICIONADO: Configuração do Tooltip ---
+  const tooltip = container.append("div")
+    .attr("class", "performance-tooltip")
+    .style("position", "absolute")
+    .style("opacity", 0)
+    .style("pointer-events", "none")
+    .style("background", "rgba(17, 24, 39, 0.95)") // bg-gray-900 com opacidade
+    .style("color", "#fff")
+    .style("padding", "8px 12px")
+    .style("border-radius", "6px")
+    .style("font-size", "12px")
+    .style("box-shadow", "0 10px 15px -3px rgba(0, 0, 0, 0.1)")
+    .style("z-index", "100")
+    .style("transition", "opacity 0.15s");
+
   const svg = container
     .append('svg')
     .attr('width', width + margin.left + margin.right)
@@ -192,7 +207,32 @@ export function drawPerformanceChart(
 
       student.performances.forEach((perf, i) => {
         const yPos = i * (subBarHeight + subBarSpacing);
-        const barGroup = g.selectAll(`.diff-bar-${i}`).data([perf]).join("g").attr("class", `diff-bar-${i}`);
+        const barGroup = g.selectAll(`.diff-bar-${i}`)
+          .data([perf])
+          .join("g")
+          .attr("class", `diff-bar-${i}`);
+
+        // --- ADICIONADO: Eventos de Interatividade no barGroup ---
+        barGroup
+          .style("cursor", "pointer")
+          .on("mouseover", function(event, d) {
+            tooltip.style("opacity", 1);
+            tooltip.html(`
+              <div style="font-weight: bold; border-bottom: 1px solid #374151; margin-bottom: 4px; padding-bottom: 4px;">${d.label}</div>
+              <div style="display: flex; flex-direction: column; gap: 2px;">
+                <span style="color: #34d399;">${d.correct} acertos</span>
+                <span style="color: #fb7185;">${d.incorrect} erros</span>
+              </div>
+            `);
+          })
+          .on("mousemove", function(event) {
+            tooltip
+              .style("left", (event.pageX + 15) + "px")
+              .style("top", (event.pageY - 10) + "px");
+          })
+          .on("mouseout", function() {
+            tooltip.style("opacity", 0);
+          });
 
         // Barra Cinza (Total)
         barGroup.selectAll(".bg-bar").data([perf]).join("rect")
