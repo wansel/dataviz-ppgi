@@ -23,7 +23,7 @@
     {
       "id": "st-003",
       "name": "Gabriel Arthur Mota",
-      "avatar": "img/students/f43.jpg",
+      "avatar": "img/students/m45.jpg",
       "performances": [
         { "label": "Fácil", "correct": 11, "incorrect": 2, "total": 26 },
         { "label": "Média", "correct": 4, "incorrect": 2, "total": 12 },
@@ -39,6 +39,48 @@
         { "label": "Média", "correct": 0, "incorrect": 1, "total": 12 },
         { "label": "Difícil", "correct": 0, "incorrect": 0, "total": 8 }
       ]
-    }
+    },
+
+    {
+    "id": "st-005",
+    "name": "João Pedro Silva",
+    "avatar": "img/students/m28.jpg",
+    "performances": [
+      { "label": "Fácil", "correct": 20, "incorrect": 4, "total": 26 },
+      { "label": "Média", "correct": 8, "incorrect": 2, "total": 12 },
+      { "label": "Difícil", "correct": 4, "incorrect": 2, "total": 8 }
+    ]
+  },
+  {
+    "id": "st-006",
+    "name": "Maria Fernanda Oliveira",
+    "avatar": "img/students/f17.jpg",
+    "performances": [
+      { "label": "Fácil", "correct": 15, "incorrect": 1, "total": 26 },
+      { "label": "Média", "correct": 5, "incorrect": 0, "total": 12 },
+      { "label": "Difícil", "correct": 2, "incorrect": 0, "total": 8 }
+    ]
+  },
+  {
+    "id": "st-007",
+    "name": "Lucas Vinícius Santos",
+    "avatar": "img/students/m35.jpg",
+    "performances": [
+      { "label": "Fácil", "correct": 14, "incorrect": 8, "total": 26 },
+      { "label": "Média", "correct": 3, "incorrect": 5, "total": 12 },
+      { "label": "Difícil", "correct": 1, "incorrect": 4, "total": 8 }
+    ]
+  },
+  {
+    "id": "st-008",
+    "name": "Beatriz Helena Souza",
+    "avatar": "img/students/f94.jpg",
+    "performances": [
+      { "label": "Fácil", "correct": 22, "incorrect": 0, "total": 26 },
+      { "label": "Média", "correct": 10, "incorrect": 1, "total": 12 },
+      { "label": "Difícil", "correct": 6, "incorrect": 1, "total": 8 }
+    ]
+  }
+    
   ]
 }
